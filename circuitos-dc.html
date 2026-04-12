@@ -547,105 +547,6 @@ function solveCircuit(comps,branches){
   return{nodeVoltages:nodeSol?nodeSol.nodeVoltages:null,compCurrents:branchSol.compCurrents,branchCurrents:branchSol.branchCurrents};
 }
 
-function buildWireAdjacency(comps,skipId){
-  var adj={};
-  function add(a,b){if(!adj[a])adj[a]=[];adj[a].push(b);}
-  comps.forEach(function(c){
-    if(c.type!=="wire"||c.id===skipId)return;
-    var a=nk(c.r1,c.c1),b=nk(c.r2,c.c2);
-    add(a,b);add(b,a);
-  });
-  return adj;
-}
-
-function hasGraphPath(adj,start,end){
-  if(start===end)return true;
-  var stack=[start],seen={};
-  seen[start]=1;
-  while(stack.length){
-    var cur=stack.pop(),arr=adj[cur]||[];
-    for(var i=0;i<arr.length;i++){
-      var nx=arr[i];
-      if(nx===end)return true;
-      if(!seen[nx]){seen[nx]=1;stack.push(nx);}
-    }
-  }
-  return false;
-}
-
-function analyzeCircuitError(sol,comps,meshInfo,compLabels){
-  if(!sol||!sol.error)return null;
-  var low=(sol.error||"").toLowerCase();
-  var eps=1e-8;
-  var srcs=comps.filter(function(c){return c.type==="source";});
-
-  for(var i=0;i<srcs.length;i++){
-    var src=srcs[i];
-    var adj=buildWireAdjacency(comps,src.id);
-    if(hasGraphPath(adj,nk(src.r1,src.c1),nk(src.r2,src.c2))){
-      var sLbl=compLabels[src.id]?compLabels[src.id].tag:"ε";
-      return{reason:sLbl+" queda cortocircuitada.",fix:"Abre ese cable o añade una resistencia en esa rama."};
-    }
-  }
-
-  var uf=makeUF();
-  comps.forEach(function(c){
-    uf.find(nk(c.r1,c.c1));uf.find(nk(c.r2,c.c2));
-    if(c.type==="wire")uf.union(nk(c.r1,c.c1),nk(c.r2,c.c2));
-  });
-  var pairMap={};
-  srcs.forEach(function(c){
-    var a=uf.find(nk(c.r1,c.c1)),b=uf.find(nk(c.r2,c.c2));
-    if(a===b)return;
-    var first=a<=b?a:b,second=a<=b?b:a;
-    var signed=(a===first&&b===second)?c.value:-c.value;
-    var key=first+"|"+second;
-    if(!pairMap[key])pairMap[key]=[];
-    pairMap[key].push({comp:c,signed:signed});
-  });
-  var pairKeys=Object.keys(pairMap);
-  for(var k=0;k<pairKeys.length;k++){
-    var arr=pairMap[pairKeys[k]];
-    if(arr.length<2)continue;
-    var base=arr[0].signed;
-    for(var j=1;j<arr.length;j++){
-      if(Math.abs(arr[j].signed-base)>eps){
-        var aLbl=compLabels[arr[0].comp.id]?compLabels[arr[0].comp.id].tag:"ε";
-        var bLbl=compLabels[arr[j].comp.id]?compLabels[arr[j].comp.id].tag:"ε";
-        return{reason:aLbl+" y "+bLbl+" fijan tensiones distintas entre los mismos nodos.",fix:"Iguala su valor/sentido o separa una rama con una resistencia."};
-      }
-    }
-  }
-
-  for(var m=0;m<(meshInfo||[]).length;m++){
-    var mi=meshInfo[m];
-    if(mi.sourceCount>0&&mi.resistorCount===0&&Math.abs(mi.netSource)>eps){
-      var fix=mi.wireBranchLabels&&mi.wireBranchLabels.length?"Cambia una fuente o añade una resistencia en "+mi.wireBranchLabels[0]+".":"Cambia una fuente o añade una resistencia en ese lazo.";
-      return{reason:"En "+mi.label+" la suma de fuentes es "+fmtScalar(mi.netSource)+" V y no hay resistencia.",fix:fix};
-    }
-  }
-
-  if(low.indexOf("singular")>=0||low.indexOf("no determinadas")>=0){
-    for(var p=0;p<(meshInfo||[]).length;p++){
-      if(meshInfo[p].activeCount===0)return{reason:"En "+meshInfo[p].label+" solo hay cable.",fix:"Añade una resistencia o elimina ese lazo."};
-    }
-    return{reason:"Hay una corriente que no queda fijada.",fix:"Añade una resistencia o una fuente en la rama libre."};
-  }
-
-  if(low.indexOf("inconsistente")>=0){
-    for(var q=0;q<(meshInfo||[]).length;q++){
-      var mq=meshInfo[q];
-      if(Math.abs(mq.netSource)>eps){
-        var fix2=mq.wireBranchLabels&&mq.wireBranchLabels.length?"Revisa una fuente o añade una resistencia en "+mq.wireBranchLabels[0]+".":"Revisa una fuente o añade una resistencia en ese lazo.";
-        return{reason:"Conflicto en "+mq.label+".",fix:fix2};
-      }
-    }
-    return{reason:"Hay restricciones incompatibles.",fix:"Revisa fuentes opuestas y lazos cerrados solo con cable."};
-  }
-
-  return null;
-}
-
 function solveMNA(comps){
   if(!comps.length)return null;
   var uf=makeUF();
@@ -697,6 +598,7 @@ function CircuitBuilder(){
   var sectionRefs=useRef({});
   var [vb,setVb]=useState(function(){return defaultViewBox((window.innerWidth||1024)<=900?2.0:2.2);});
   var panRef=useRef(null);
+  var pinchRef=useRef(null);
   var hIdxRef=useRef(0);
   useEffect(function(){
     function onResize(){setViewport({w:window.innerWidth||1024,h:window.innerHeight||768});}
@@ -723,33 +625,25 @@ function CircuitBuilder(){
       var loopPts=insetClosedPolygon(screenBoundary,inset)||screenBoundary;
       var center=(function(){var sx=0,sy=0,n=0;region.cells.forEach(function(cell){sx+=PAD+(cell.c+0.5)*CELL;sy+=PAD+(cell.r+0.5)*CELL;n++;});return{x:n?sx/n:0,y:n?sy/n:0};})();
       var orderedSegments=rotateSegmentsStartAtSource(traced.segments,edgeCompMap);
-      var symbolicTerms=[],numericTerms=[],active=0,resistorCount=0,sourceCount=0,netSource=0,wireBranchLabels=[];
+      var symbolicTerms=[],numericTerms=[],active=0;
       orderedSegments.forEach(function(seg){
         var comp=edgeCompMap[ek(seg.edge.r1,seg.edge.c1,seg.edge.r2,seg.edge.c2)];
-        if(!comp)return;
-        if(comp.type==="wire"){
-          var wm=compBranchMap[comp.id];
-          if(wm&&wireBranchLabels.indexOf(wm.label)<0)wireBranchLabels.push(wm.label);
-          return;
-        }
+        if(!comp||comp.type==="wire")return;
         active++;
         var stepCompDir=(comp.r1===seg.edge.r1&&comp.c1===seg.edge.c1&&comp.r2===seg.edge.r2&&comp.c2===seg.edge.c2)?1:-1;
         if(comp.type==="resistor"){
-          resistorCount++;
           var bm=compBranchMap[comp.id];
           if(!bm)return;
           var sign=-stepCompDir*bm.compDir;
           symbolicTerms.push({sign:sign,text:(compLabels[comp.id]?compLabels[comp.id].tag:"R")+"·"+bm.label});
           numericTerms.push({sign:sign,text:fmtScalar(comp.value)+"·"+bm.label});
         }else if(comp.type==="source"){
-          sourceCount++;
           var sgn=stepCompDir;
-          netSource+=sgn*comp.value;
           symbolicTerms.push({sign:sgn,text:compLabels[comp.id]?compLabels[comp.id].tag:"ε"});
           numericTerms.push({sign:sgn,text:fmtScalar(comp.value)});
         }
       });
-      return{region:region,center:center,path:pointsToPath(loopPts),arrow:longestSegmentInfo(loopPts),symbolic:eqText(symbolicTerms),numeric:eqText(numericTerms),sortV:center.y*10000+center.x,activeCount:active,resistorCount:resistorCount,sourceCount:sourceCount,netSource:netSource,wireBranchLabels:wireBranchLabels};
+      return{region:region,center:center,path:pointsToPath(loopPts),arrow:longestSegmentInfo(loopPts),symbolic:eqText(symbolicTerms),numeric:eqText(numericTerms),sortV:center.y*10000+center.x,activeCount:active};
     }).filter(Boolean).sort(function(a,b){return a.sortV-b.sortV;}).map(function(mi,i){return Object.assign({},mi,{label:"L"+sub(i+1)});});
   },[comps,edgeCompMap,compBranchMap,compLabels]);
   var kclInfo=useMemo(function(){
@@ -793,7 +687,6 @@ function CircuitBuilder(){
     meshInfo.forEach(function(mi){if(mi.region&&mi.region.cells)mi.region.cells.forEach(function(cell){cells[nk(cell.r,cell.c)]=1;});});
     return cells;
   },[meshInfo]);
-  var errorInfo=useMemo(function(){return analyzeCircuitError(sol,comps,meshInfo,compLabels);},[sol,comps,meshInfo,compLabels]);
   useEffect(function(){
     if(!comps.length||!meshRegionCount){
       setSol(null);
@@ -807,26 +700,32 @@ function CircuitBuilder(){
   function redo(){if(canRedo){var n=hIdx+1;setHIdx(n);hIdxRef.current=n;setSol(null);setSel(null);setEditId(null);}}
   useEffect(function(){function fn(e){if(editId)return;if(e.key==="Escape"){setTool(null);setSel(null);setEditId(null);}if((e.key==="Delete"||e.key==="Backspace")&&selected){e.preventDefault();pushState(comps.filter(function(c){return c.id!==selected;}));setSel(null);}if((e.key==="z"||e.key==="Z")&&(e.ctrlKey||e.metaKey)){e.preventDefault();if(e.shiftKey)redo();else undo();}}window.addEventListener("keydown",fn);return function(){window.removeEventListener("keydown",fn);};},[selected,editId,comps,canUndo,canRedo,hIdx,pushState]);
   function getClientPoint(e){if(!e)return null;if(typeof e.clientX==="number"&&typeof e.clientY==="number")return{x:e.clientX,y:e.clientY};if(e.touches&&e.touches.length)return{x:e.touches[0].clientX,y:e.touches[0].clientY};if(e.changedTouches&&e.changedTouches.length)return{x:e.changedTouches[0].clientX,y:e.changedTouches[0].clientY};return null;}
-  function toSvg(e){var svg=svgRef.current;if(!svg)return null;var pt=getClientPoint(e);if(!pt)return null;var ctm=svg.getScreenCTM();if(!ctm)return null;var inv=ctm.inverse();return[pt.x*inv.a+pt.y*inv.c+inv.e,pt.x*inv.b+pt.y*inv.d+inv.f];}
+  function getTouchPairInfo(touches){if(!touches||touches.length<2)return null;var t0=touches[0],t1=touches[1];return{centerClient:{x:(t0.clientX+t1.clientX)/2,y:(t0.clientY+t1.clientY)/2},dist:Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY)};}
+  function clientToSvgPoint(client){var svg=svgRef.current;if(!svg||!client)return null;var ctm=svg.getScreenCTM();if(!ctm)return null;var inv=ctm.inverse();return[client.x*inv.a+client.y*inv.c+inv.e,client.x*inv.b+client.y*inv.d+inv.f];}
+  function toSvg(e){var pt=getClientPoint(e);if(!pt)return null;return clientToSvgPoint(pt);}
+  function getSvgClientCenter(){var svg=svgRef.current;if(!svg)return null;var rect=svg.getBoundingClientRect();if(!rect||!rect.width||!rect.height)return null;return{x:rect.left+rect.width/2,y:rect.top+rect.height/2};}
+  function getViewCenterSvg(view){view=view||vb;return[view.x+view.w/2,view.y+view.h/2];}
+  function getCircuitCenterSvg(){return comps.length?[(circuitBounds.minX+circuitBounds.maxX)/2,(circuitBounds.minY+circuitBounds.maxY)/2]:[SVG_W/2,SVG_H/2];}
+  function buildZoomedViewBox(baseVb,factor,anchorSvg,anchorClient){var svg=svgRef.current;if(!svg||!baseVb)return null;var rect=svg.getBoundingClientRect();if(!rect||!rect.width||!rect.height)return null;var nw2=Math.max(SVG_W*0.15,Math.min(SVG_W*2.5,baseVb.w*factor));var nh=Math.max(SVG_H*0.15,Math.min(SVG_H*2.5,baseVb.h*factor));var client=anchorClient||{x:rect.left+rect.width/2,y:rect.top+rect.height/2};var fx=(client.x-rect.left)/rect.width,fy=(client.y-rect.top)/rect.height;fx=Math.max(0,Math.min(1,fx));fy=Math.max(0,Math.min(1,fy));var svgAnchor=anchorSvg||getViewCenterSvg(baseVb);return{x:svgAnchor[0]-fx*nw2,y:svgAnchor[1]-fy*nh,w:nw2,h:nh};}
   function beginPan(pt){var ctm=svgRef.current&&svgRef.current.getScreenCTM();panRef.current={sx:pt.x,sy:pt.y,vb0:Object.assign({},vb),moved:false,scX:ctm?1/ctm.a:1,scY:ctm?1/ctm.d:1};}
   function movePan(pt){var pr=panRef.current;if(!pr||!pt)return;var dx=pt.x-pr.sx,dy=pt.y-pr.sy;if(Math.abs(dx)>3||Math.abs(dy)>3)pr.moved=true;if(pr.moved)setVb({x:pr.vb0.x-dx*pr.scX,y:pr.vb0.y-dy*pr.scY,w:pr.vb0.w,h:pr.vb0.h});}
   function endPan(){var pr=panRef.current;panRef.current=null;if(pr&&!pr.moved&&!tool){setSel(null);setEditId(null);}}
-  function applyZoom(f,center){var cx=center?center[0]:vb.x+vb.w/2,cy=center?center[1]:vb.y+vb.h/2;var nw2=Math.max(SVG_W*0.15,Math.min(SVG_W*2.5,vb.w*f));var nh=Math.max(SVG_H*0.15,Math.min(SVG_H*2.5,vb.h*f));setVb({x:cx-nw2/2,y:cy-nh/2,w:nw2,h:nh});}
-  function onWheel(e){e.preventDefault();var p=toSvg(e);if(!p)return;applyZoom(e.deltaY>0?1.12:0.89,p);}
+  function applyZoom(f,anchorSvg,anchorClient){var next=buildZoomedViewBox(vb,f,anchorSvg,anchorClient);if(next)setVb(next);}
+  function onWheel(e){if(isMobile)return;e.preventDefault();var clientCenter=getSvgClientCenter();var anchorSvg=getCircuitCenterSvg();var next=buildZoomedViewBox(vb,e.deltaY>0?1.12:0.89,anchorSvg,clientCenter);if(next)setVb(next);}
   function onMouseDown(e){if(e.button===0&&!tool){var pt=getClientPoint(e);if(pt)beginPan(pt);}}
   function onMM(e){var pt=getClientPoint(e);if(panRef.current&&pt)movePan(pt);if(tool){var p=toSvg(e);if(p)setHEdge(closestEdge(p[0],p[1]));}}
   function onMU(){endPan();}
-  function onTouchStart(e){if(!isMobile||e.touches.length!==1)return;if(tool){var p=toSvg(e);if(p)setHEdge(closestEdge(p[0],p[1]));return;}var pt=getClientPoint(e);if(pt)beginPan(pt);}
-  function onTouchMove(e){if(!isMobile||e.touches.length!==1)return;if(tool){var p=toSvg(e);if(p)setHEdge(closestEdge(p[0],p[1]));e.preventDefault();return;}var pt=getClientPoint(e);if(pt){movePan(pt);if(panRef.current&&panRef.current.moved)e.preventDefault();}}
-  function onTouchEnd(e){if(!isMobile)return;if(tool){onSC(e);setHEdge(null);e.preventDefault();return;}endPan();}
-  function onTouchCancel(){panRef.current=null;setHEdge(null);}
+  function onTouchStart(e){if(!isMobile)return;if(e.touches&&e.touches.length===2){var pair=getTouchPairInfo(e.touches);var anchor=pair?clientToSvgPoint(pair.centerClient):null;if(pair&&anchor){pinchRef.current={startDist:Math.max(pair.dist,1),anchorSvg:anchor,vb0:Object.assign({},vb)};panRef.current=null;setHEdge(null);e.preventDefault();}return;}if(pinchRef.current)return;if(e.touches.length!==1)return;if(tool){var p=toSvg(e);if(p)setHEdge(closestEdge(p[0],p[1]));return;}var pt=getClientPoint(e);if(pt)beginPan(pt);}
+  function onTouchMove(e){if(!isMobile)return;if(e.touches&&e.touches.length===2){var pair=getTouchPairInfo(e.touches);if(!pair)return;if(!pinchRef.current){var anchor=clientToSvgPoint(pair.centerClient);if(anchor)pinchRef.current={startDist:Math.max(pair.dist,1),anchorSvg:anchor,vb0:Object.assign({},vb)};}if(pinchRef.current){var factor=pinchRef.current.startDist/Math.max(pair.dist,1);var next=buildZoomedViewBox(pinchRef.current.vb0,factor,pinchRef.current.anchorSvg,pair.centerClient);if(next)setVb(next);e.preventDefault();}return;}if(pinchRef.current){e.preventDefault();return;}if(e.touches.length!==1)return;if(tool){var p=toSvg(e);if(p)setHEdge(closestEdge(p[0],p[1]));e.preventDefault();return;}var pt=getClientPoint(e);if(pt){movePan(pt);if(panRef.current&&panRef.current.moved)e.preventDefault();}}
+  function onTouchEnd(e){if(!isMobile)return;if(pinchRef.current){if(!e.touches||e.touches.length<2)pinchRef.current=null;setHEdge(null);e.preventDefault();return;}if(tool){onSC(e);setHEdge(null);e.preventDefault();return;}endPan();}
+  function onTouchCancel(){panRef.current=null;pinchRef.current=null;setHEdge(null);}
   function onSC(e){var edge=hEdge;if(!edge){var p=toSvg(e);if(p)edge=closestEdge(p[0],p[1]);}if(!tool||!edge)return;pushState(comps.filter(function(c){return!sameEdge(c,edge);}).concat([{id:_uid++,type:tool,r1:edge.r1,c1:edge.c1,r2:edge.r2,c2:edge.c2,value:TYPES[tool].def}]));if(isMobile)setHEdge(null);}
   function invSrc(id){pushState(comps.map(function(c){return c.id!==id||c.type!=="source"?c:{id:c.id,type:c.type,r1:c.r2,c1:c.c2,r2:c.r1,c2:c.c1,value:c.value};}));}
   function commitEdit(id,raw){var v=parseFloat(raw||editVal);if(!isNaN(v)&&v>0)pushState(comps.map(function(c){return c.id===id?Object.assign({},c,{value:v}):c;}));setEditId(null);}
   function onCC(e,id){if(tool)return;e.stopPropagation();setSel(id);}
   function zoomIn(){applyZoom(0.89);}
   function zoomOut(){applyZoom(1.12);}
-  function resetZ(){setVb(defaultViewBox(isMobile?2.0:2.2));}
+  function resetZ(){pinchRef.current=null;setVb(defaultViewBox(isMobile?2.0:2.2));}
   function clearCircuit(){
     if(comps.length){pushState([]);} else {setSol(null);}
     setSel(null);
@@ -1160,7 +1059,7 @@ function CircuitBuilder(){
           {meshInfo.length>0&&(<div style={{padding:isMobile?"8px 10px":"8px 11px",borderTop:"1px solid "+K.border}}><div ref={function(el){sectionRefs.current.kvl=el;}} style={{fontSize:sectionTitleFont,fontWeight:800,textTransform:"uppercase",color:K.dim,letterSpacing:"0.08em",marginBottom:8}}>Lazos</div><div style={{padding:"0 6px 7px",fontSize:panelNoteFont,color:K.dim,lineHeight:1.55}}>Mallas internas en verde, orientadas en sentido horario. Convención: en fuente, de − a + suma +ε; en resistencia, contra la corriente suma +I·R.</div>{meshInfo.map(function(mi){return(<div key={mi.label} style={{padding:"5px 6px 8px",fontSize:equationFont,lineHeight:1.58}}><div style={{display:"flex",gap:8,alignItems:"baseline"}}><span style={{color:MLC,fontWeight:800,minWidth:40,fontFamily:"monospace"}}>{mi.label}</span><span style={{fontFamily:"Inter, Segoe UI Symbol, Segoe UI, sans-serif",fontWeight:600,color:K.bright,wordBreak:"break-word"}}>{mi.symbolic}</span></div>{mi.activeCount>0&&<div style={{paddingLeft:48,color:K.dim,fontSize:equationSmallFont,fontFamily:"Inter, Segoe UI Symbol, Segoe UI, sans-serif",lineHeight:1.45,wordBreak:"break-word"}}>{mi.numeric}</div>}</div>);})}</div>)}
           {kclInfo.length>0&&(<div style={{padding:isMobile?"8px 10px":"8px 11px",borderTop:"1px solid "+K.border}}><div ref={function(el){sectionRefs.current.kcl=el;}} style={{fontSize:sectionTitleFont,fontWeight:800,textTransform:"uppercase",color:K.dim,letterSpacing:"0.08em",marginBottom:8}}>Nodos</div><div style={{padding:"0 6px 7px",fontSize:panelNoteFont,color:K.dim,lineHeight:1.55}}>Se muestran solo las ecuaciones independientes, en forma corrientes que entran = corrientes que salen.</div>{kclInfo.map(function(ki){return(<div key={ki.root} style={{padding:"5px 6px 8px",fontSize:equationFont,lineHeight:1.58}}><div style={{display:"flex",gap:8,alignItems:"baseline"}}><span style={{color:SNC,fontWeight:800,minWidth:40,fontFamily:"monospace"}}>{ki.nodeLabel}</span><span style={{fontFamily:"Inter, Segoe UI Symbol, Segoe UI, sans-serif",fontWeight:600,color:K.bright,wordBreak:"break-word"}}>{ki.equality}</span></div><div style={{paddingLeft:48,color:K.dim,fontSize:equationSmallFont,fontFamily:"Inter, Segoe UI Symbol, Segoe UI, sans-serif",lineHeight:1.45,wordBreak:"break-word"}}>{ki.zero}</div></div>);})}</div>)}
         </div>
-        {sol&&sol.error&&<div ref={function(el){sectionRefs.current.error=el;}} style={{margin:isMobile?"0 10px 10px":"0 12px 10px",padding:isMobile?"9px 10px":"10px 12px",background:"#fef2f2",border:"1px solid "+K.danger+"33",borderRadius:8,fontSize:panelNoteFont,color:K.danger,lineHeight:1.5}}><div style={{fontWeight:800,marginBottom:errorInfo?5:0}}>{sol.error}</div>{errorInfo&&<div style={{display:"grid",gap:4}}><div><span style={{fontWeight:800}}>Motivo:</span> {errorInfo.reason}</div><div><span style={{fontWeight:800}}>Arreglo:</span> {errorInfo.fix}</div></div>}</div>}
+        {sol&&sol.error&&<div ref={function(el){sectionRefs.current.error=el;}} style={{margin:isMobile?"0 10px 10px":"0 12px 10px",padding:isMobile?"9px 10px":"10px 12px",background:"#fef2f2",border:"1px solid "+K.danger+"33",borderRadius:8,fontSize:panelNoteFont,color:K.danger,lineHeight:1.5}}>{sol.error}</div>}
       </div>
       <div style={editorPaneStyle}>
         <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:isMobile?8:12,position:"relative",minHeight:0}}>
