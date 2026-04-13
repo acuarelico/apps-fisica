@@ -1,0 +1,407 @@
+<!--
+  =========================================================================
+  Condensadores con Dieléctrico - Simulador Didáctico Interactivo
+  =========================================================================
+
+  © 2026 Rubén Capeáns Rivas
+  Universidad Rey Juan Carlos (URJC)
+  ruben.capeans@urjc.es
+
+  Esta obra está bajo una licencia Creative Commons
+  Atribución-NoComercial-CompartirIgual 4.0 Internacional (CC BY-NC-SA 4.0).
+  https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es
+
+  =========================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KKP02BKC7W"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-KKP02BKC7W');
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⚡ Condensadores con Dieléctrico - Didáctico</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body,#root { width:100%; min-height:100%; background:#f8f7f4; }
+body { overscroll-behavior:none; -webkit-font-smoothing:antialiased; }
+button,input,select,textarea { font:inherit; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+var { useState, useMemo, useEffect, useRef, useCallback } = React;
+
+/*
+ * Condensadores con Dieléctrico - Simulador Didáctico Interactivo
+ * © 2026 Rubén Capeáns Rivas — Universidad Rey Juan Carlos
+ * Licencia: CC BY-NC-SA 4.0
+ */
+
+// ─── KaTeX component ──────────────────────────────────────────
+function Tex({ c, display }) {
+  var ref = useRef(null);
+  useEffect(function(){
+    if (ref.current && window.katex) {
+      try { window.katex.render(c, ref.current, { displayMode: !!display, throwOnError: false }); } catch(e) {}
+    }
+  }, [c, display]);
+  return <span ref={ref} />;
+}
+
+// ─── Physics ──────────────────────────────────────────────────
+function computeOriginal(C1, C2, V, topo) {
+  if (topo === "serie") {
+    var Ceq = (C1*C2)/(C1+C2), Q = Ceq*V;
+    return { Ceq:Ceq, Q1:Q, Q2:Q, V1:Q/C1, V2:Q/C2, C1:C1, C2:C2 };
+  }
+  return { Ceq:C1+C2, Q1:C1*V, Q2:C2*V, V1:V, V2:V, C1:C1, C2:C2 };
+}
+
+function computeModified(C1, C2, V, er, topo, mod, orig) {
+  var C1p = er*C1, C2p = C2;
+  if (topo === "serie") {
+    if (mod === "sin_bateria") {
+      var Q = orig.Q1;
+      return { Q1:Q, Q2:Q, V1:Q/C1p, V2:Q/C2p, C1:C1p, C2:C2p };
+    }
+    var Ceq2=(C1p*C2p)/(C1p+C2p), Q2=Ceq2*V;
+    return { Q1:Q2, Q2:Q2, V1:Q2/C1p, V2:Q2/C2p, C1:C1p, C2:C2p };
+  }
+  if (mod === "sin_bateria") {
+    var Qt=orig.Q1+orig.Q2, Vp=Qt/(C1p+C2p);
+    return { Q1:C1p*Vp, Q2:C2p*Vp, V1:Vp, V2:Vp, C1:C1p, C2:C2p };
+  }
+  return { Q1:C1p*V, Q2:C2p*V, V1:V, V2:V, C1:C1p, C2:C2p };
+}
+
+function f(v) {
+  if (Math.abs(v)<0.005) return "0";
+  var s = v.toFixed(2);
+  return s.replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+}
+
+// ─── LaTeX Formulas ───────────────────────────────────────────
+function getFormulas(topo, mod, isModified, C1, C2, V, er) {
+  if (!isModified) {
+    if (topo === "serie") {
+      var Q=(C1*C2)/(C1+C2)*V;
+      return [
+        "Q_1 = Q_2 = Q \\quad(\\text{en serie})",
+        "V_1 + V_2 = V \\;\\rightarrow\\; \\frac{Q}{C_1}+\\frac{Q}{C_2}=V",
+        "Q = \\frac{V \\cdot C_1 \\cdot C_2}{C_1+C_2}=\\frac{"+V+"\\cdot"+C1+"\\cdot"+C2+"}{"+C1+"+"+C2+"}=\\color{#b45309}{"+f(Q)+"\\;\\mu\\text{C}}",
+        "V_1 = \\frac{Q}{C_1}=\\frac{"+f(Q)+"}{"+C1+"}=\\color{#dc2626}{"+f(Q/C1)+"\\;\\text{V}}",
+        "V_2 = \\frac{Q}{C_2}=\\frac{"+f(Q)+"}{"+C2+"}=\\color{#dc2626}{"+f(Q/C2)+"\\;\\text{V}}",
+      ];
+    }
+    return [
+      "V_1 = V_2 = V = \\color{#dc2626}{"+V+"\\;\\text{V}}\\quad(\\text{en paralelo})",
+      "Q_1 = C_1 \\cdot V = "+C1+"\\cdot"+V+" = \\color{#b45309}{"+f(C1*V)+"\\;\\mu\\text{C}}",
+      "Q_2 = C_2 \\cdot V = "+C2+"\\cdot"+V+" = \\color{#b45309}{"+f(C2*V)+"\\;\\mu\\text{C}}",
+    ];
+  }
+
+  var C1p = er*C1;
+  if (topo === "serie") {
+    if (mod === "sin_bateria") {
+      var Qs=(C1*C2)/(C1+C2)*V;
+      return [
+        "C_1' = \\varepsilon_r \\cdot C_1 = "+er+"\\cdot"+C1+" = \\color{#c026d3}{"+C1p+"\\;\\mu\\text{F}}",
+        "Q_1' = Q_2' = Q_{\\text{orig}} = \\color{#b45309}{"+f(Qs)+"\\;\\mu\\text{C}}",
+        "V_1' = \\frac{Q'}{C_1'}=\\frac{"+f(Qs)+"}{"+C1p+"}=\\color{#dc2626}{"+f(Qs/C1p)+"\\;\\text{V}}",
+        "V_2' = \\frac{Q'}{C_2}=\\frac{"+f(Qs)+"}{"+C2+"}=\\color{#dc2626}{"+f(Qs/C2)+"\\;\\text{V}}",
+        "V_1'+V_2' = "+f(Qs/C1p)+"+"+f(Qs/C2)+" = "+f(Qs/C1p+Qs/C2)+"\\;\\text{V}\\neq "+V+"\\;\\text{V}",
+      ];
+    }
+    var Qcb=(C1p*C2)/(C1p+C2)*V;
+    return [
+      "C_1' = \\varepsilon_r \\cdot C_1 = "+er+"\\cdot"+C1+" = \\color{#c026d3}{"+C1p+"\\;\\mu\\text{F}}",
+      "Q_1' = Q_2' = Q' \\quad(\\text{en serie})",
+      "V_1'+V_2' = V \\;\\rightarrow\\; \\frac{Q'}{C_1'}+\\frac{Q'}{C_2}="+V,
+      "Q' = \\frac{V\\cdot C_1'\\cdot C_2}{C_1'+C_2}=\\frac{"+V+"\\cdot"+C1p+"\\cdot"+C2+"}{"+C1p+"+"+C2+"}=\\color{#b45309}{"+f(Qcb)+"\\;\\mu\\text{C}}",
+      "V_1' = \\frac{Q'}{C_1'}=\\frac{"+f(Qcb)+"}{"+C1p+"}=\\color{#dc2626}{"+f(Qcb/C1p)+"\\;\\text{V}}",
+      "V_2' = \\frac{Q'}{C_2}=\\frac{"+f(Qcb)+"}{"+C2+"}=\\color{#dc2626}{"+f(Qcb/C2)+"\\;\\text{V}}",
+    ];
+  }
+  if (mod === "sin_bateria") {
+    var Qtp=C1*V+C2*V, Vpp=Qtp/(C1p+C2);
+    return [
+      "C_1' = \\varepsilon_r \\cdot C_1 = "+er+"\\cdot"+C1+" = \\color{#c026d3}{"+C1p+"\\;\\mu\\text{F}}",
+      "Q_1'+Q_2' = Q_1+Q_2 = \\color{#b45309}{"+f(Qtp)+"\\;\\mu\\text{C}}",
+      "V_1' = V_2' = V' \\quad(\\text{en paralelo})",
+      "C_1'\\cdot V'+C_2\\cdot V'="+f(Qtp)+"\\;\\rightarrow\\; V'=\\frac{"+f(Qtp)+"}{"+C1p+"+"+C2+"}=\\color{#dc2626}{"+f(Vpp)+"\\;\\text{V}}",
+      "Q_1' = C_1'\\cdot V' = "+C1p+"\\cdot"+f(Vpp)+" = \\color{#b45309}{"+f(C1p*Vpp)+"\\;\\mu\\text{C}}",
+      "Q_2' = C_2\\cdot V' = "+C2+"\\cdot"+f(Vpp)+" = \\color{#b45309}{"+f(C2*Vpp)+"\\;\\mu\\text{C}}",
+    ];
+  }
+  return [
+    "C_1' = \\varepsilon_r \\cdot C_1 = "+er+"\\cdot"+C1+" = \\color{#c026d3}{"+C1p+"\\;\\mu\\text{F}}",
+    "V_1' = V_2' = V = \\color{#dc2626}{"+V+"\\;\\text{V}}\\quad(\\text{batería fija})",
+    "Q_1' = C_1'\\cdot V = "+C1p+"\\cdot"+V+" = \\color{#b45309}{"+f(C1p*V)+"\\;\\mu\\text{C}}",
+    "Q_2' = C_2\\cdot V = "+C2+"\\cdot"+V+" = \\color{#b45309}{"+f(C2*V)+"\\;\\mu\\text{C}}",
+  ];
+}
+
+// ─── SVG ──────────────────────────────────────────────────────
+var CC="#0e7490",CD="#c026d3",SC="#dc2626",WC="#334155";
+
+function Cap(props){
+  var x=props.x,y=props.y,diel=props.diel,label=props.label,vert=props.vert,dop=props.dop;
+  var g=18,p=28,col=diel?CD:CC,fs=label.length>5?11:13;
+  var tf="KaTeX_Main,'Times New Roman',serif";
+  if(vert) return(<g>
+    {diel&&<rect x={x-p-3} y={y-g} width={p*2+6} height={g*2} fill={CD} opacity={dop} rx={3}/>}
+    <line x1={x-p} y1={y-g} x2={x+p} y2={y-g} stroke={col} strokeWidth={3} strokeLinecap="round"/>
+    <line x1={x-p} y1={y+g} x2={x+p} y2={y+g} stroke={col} strokeWidth={3} strokeLinecap="round"/>
+    <text x={x} y={y+5} fontSize={fs} fontWeight={700} fill={col} textAnchor="middle" fontFamily={tf}>{label}</text>
+  </g>);
+  return(<g>
+    {diel&&<rect x={x-g} y={y-p-3} width={g*2} height={p*2+6} fill={CD} opacity={dop} rx={3}/>}
+    <line x1={x-g} y1={y-p} x2={x-g} y2={y+p} stroke={col} strokeWidth={3} strokeLinecap="round"/>
+    <line x1={x+g} y1={y-p} x2={x+g} y2={y+p} stroke={col} strokeWidth={3} strokeLinecap="round"/>
+    <text x={x} y={y+5} fontSize={fs} fontWeight={700} fill={col} textAnchor="middle" fontFamily={tf}>{label}</text>
+  </g>);
+}
+
+function Bat(props){
+  var x=props.x,y=props.y,dimmed=props.dimmed,label=props.label;
+  var op=dimmed?0.13:1,lp=20,sp=12,gap=6;
+  var tf="KaTeX_Main,'Times New Roman',serif";
+  return(<g opacity={op}>
+    <line x1={x-lp} y1={y-gap} x2={x+lp} y2={y-gap} stroke={SC} strokeWidth={3.5} strokeLinecap="round"/>
+    <line x1={x-sp} y1={y+gap} x2={x+sp} y2={y+gap} stroke={SC} strokeWidth={2.5} strokeLinecap="round"/>
+    <text x={x-lp-5} y={y-gap+1} fontSize={14} fill={SC} fontWeight={900} fontFamily={tf} dominantBaseline="middle" textAnchor="end">+</text>
+    <text x={x-sp-5} y={y+gap+1} fontSize={15} fill={SC} fontWeight={900} fontFamily={tf} dominantBaseline="middle" textAnchor="end">−</text>
+    {label&&<text x={x+lp+7} y={y+2} fontSize={14} fontWeight={700} fill={SC} textAnchor="start" fontFamily={tf} dominantBaseline="middle">{label}</text>}
+  </g>);
+}
+
+function XMark(props){var x=props.x,y=props.y;return(<g>
+  <circle cx={x} cy={y} r={16} fill="#fef2f2" stroke="#ef4444" strokeWidth={1.5} opacity={0.9}/>
+  <line x1={x-7} y1={y-7} x2={x+7} y2={y+7} stroke="#ef4444" strokeWidth={3} strokeLinecap="round"/>
+  <line x1={x+7} y1={y-7} x2={x-7} y2={y+7} stroke="#ef4444" strokeWidth={3} strokeLinecap="round"/>
+</g>);}
+
+function SeriesCirc(props){
+  var showBattery=props.showBattery,dielOnC1=props.dielOnC1,vLabel=props.vLabel,c1Label=props.c1Label,c2Label=props.c2Label,dop=props.dop;
+  var W=340,H=145,top=30,bot=H-12,left=50,right=W-50,my=(top+bot)/2;
+  var cx1=W*0.37,cx2=W*0.63;
+  return(<svg viewBox={"0 0 "+W+" "+H} width="100%" style={{maxWidth:480}}>
+    <line x1={left} y1={top} x2={cx1-19} y2={top} stroke={WC} strokeWidth={2.5}/>
+    <line x1={cx1+19} y1={top} x2={cx2-19} y2={top} stroke={WC} strokeWidth={2.5}/>
+    <line x1={cx2+19} y1={top} x2={right} y2={top} stroke={WC} strokeWidth={2.5}/>
+    <line x1={right} y1={top} x2={right} y2={bot} stroke={WC} strokeWidth={2.5}/>
+    <line x1={left} y1={bot} x2={right} y2={bot} stroke={WC} strokeWidth={2.5}/>
+    <line x1={left} y1={top} x2={left} y2={my-16} stroke={WC} strokeWidth={2.5}/>
+    <line x1={left} y1={my+16} x2={left} y2={bot} stroke={WC} strokeWidth={2.5}/>
+    <Cap x={cx1} y={top} diel={dielOnC1} label={c1Label} vert={false} dop={dop}/>
+    <Cap x={cx2} y={top} diel={false} label={c2Label} vert={false} dop={0}/>
+    <Bat x={left} y={my} dimmed={!showBattery} label={vLabel}/>
+    {!showBattery&&<XMark x={left} y={my}/>}
+  </svg>);
+}
+
+function ParallelCirc(props){
+  var showBattery=props.showBattery,dielOnC1=props.dielOnC1,vLabel=props.vLabel,c1Label=props.c1Label,c2Label=props.c2Label,dop=props.dop;
+  var W=340,H=165,top=22,bot=H-22,left=50,right=W-50,my=(top+bot)/2;
+  var bx1=W*0.43,bx2=W*0.67;
+  return(<svg viewBox={"0 0 "+W+" "+H} width="100%" style={{maxWidth:480}}>
+    <line x1={left} y1={top} x2={right} y2={top} stroke={WC} strokeWidth={2.5}/>
+    <line x1={left} y1={bot} x2={right} y2={bot} stroke={WC} strokeWidth={2.5}/>
+    <line x1={left} y1={top} x2={left} y2={my-16} stroke={WC} strokeWidth={2.5}/>
+    <line x1={left} y1={my+16} x2={left} y2={bot} stroke={WC} strokeWidth={2.5}/>
+    <Bat x={left} y={my} dimmed={!showBattery} label={vLabel}/>
+    {!showBattery&&<XMark x={left} y={my}/>}
+    <line x1={bx1} y1={top} x2={bx1} y2={my-19} stroke={WC} strokeWidth={2.5}/>
+    <line x1={bx1} y1={my+19} x2={bx1} y2={bot} stroke={WC} strokeWidth={2.5}/>
+    <Cap x={bx1} y={my} diel={dielOnC1} label={c1Label} vert={true} dop={dop}/>
+    <line x1={bx2} y1={top} x2={bx2} y2={my-19} stroke={WC} strokeWidth={2.5}/>
+    <line x1={bx2} y1={my+19} x2={bx2} y2={bot} stroke={WC} strokeWidth={2.5}/>
+    <Cap x={bx2} y={my} diel={false} label={c2Label} vert={true} dop={0}/>
+    <line x1={right} y1={top} x2={right} y2={bot} stroke={WC} strokeWidth={2.5}/>
+  </svg>);
+}
+
+// ─── UI ───────────────────────────────────────────────────────
+function Slider(props){
+  var label=props.label,value=props.value,onChange=props.onChange,min=props.min,max=props.max,step=props.step,unit=props.unit,color=props.color;
+  return(<div style={{display:"flex",flexDirection:"column",gap:3}}>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+      <span style={{fontSize:13,fontWeight:700,color:color,fontFamily:"'JetBrains Mono',monospace"}}>{label}</span>
+      <span style={{fontSize:14,fontWeight:800,fontFamily:"'JetBrains Mono',monospace",color:"#1c1917",background:"#f1f0ec",padding:"2px 8px",borderRadius:6,minWidth:60,textAlign:"right",display:"inline-block"}}>{value}{unit}</span>
+    </div>
+    <input type="range" min={min} max={max} step={step} value={value} onChange={function(e){onChange(Number(e.target.value));}} style={{width:"100%",accentColor:color,height:6,cursor:"pointer"}}/>
+  </div>);
+}
+
+function Tog(props){
+  var options=props.options,value=props.value,onChange=props.onChange,color=props.color;
+  return(<div style={{display:"flex",borderRadius:10,overflow:"hidden",border:"1.5px solid "+color}}>
+    {options.map(function(o,i){var a=o.value===value;
+      return <button key={o.value} onClick={function(){onChange(o.value);}} style={{flex:1,padding:"8px 6px",border:"none",cursor:"pointer",fontSize:12.5,fontWeight:a?800:600,fontFamily:"'JetBrains Mono',monospace",background:a?color:"transparent",color:a?"#fff":color,transition:"all .15s",borderRight:i<options.length-1?"1px solid "+color+"33":"none"}}>{o.label}</button>;
+    })}
+  </div>);
+}
+
+// ─── Results ──────────────────────────────────────────────────
+function Results(props){
+  var data=props.data,title=props.title,isModified=props.isModified,formulas=props.formulas,explanation=props.explanation;
+  var p=isModified?"'":"";
+  var rows=[
+    {l:"C_1"+p,v:f(data.C1)+"\\;\\mu\\text{F}",c:isModified?CD:CC},
+    {l:"C_2"+p,v:f(data.C2)+"\\;\\mu\\text{F}",c:CC},
+    {l:"Q_1"+p,v:f(data.Q1)+"\\;\\mu\\text{C}",c:"#b45309"},
+    {l:"Q_2"+p,v:f(data.Q2)+"\\;\\mu\\text{C}",c:"#b45309"},
+    {l:"V_1"+p,v:f(data.V1)+"\\;\\text{V}",c:"#dc2626"},
+    {l:"V_2"+p,v:f(data.V2)+"\\;\\text{V}",c:"#dc2626"},
+  ];
+
+  return(
+    <div style={{background:"#fff",border:"1px solid #e0ddd6",borderRadius:14,padding:"12px 16px",display:"flex",flexDirection:"column",gap:8}}>
+      <div style={{lineHeight:1.5}}>
+        <span style={{fontSize:15,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",color:"#78716c"}}>{title}</span>
+        {explanation&&<span style={{fontSize:13,color:"#78580a",fontWeight:500,marginLeft:8}}>{explanation}</span>}
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:5}}>
+        {rows.map(function(r){return(
+          <div key={r.l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#f1f0ec",borderRadius:8,padding:"5px 12px"}}>
+            <span style={{fontSize:16}}><Tex c={"\\color{"+r.c+"}{"+r.l+"}"}/></span>
+            <span style={{fontSize:16}}><Tex c={r.v}/></span>
+          </div>
+        );})}
+      </div>
+
+      <div style={{borderTop:"1px solid #e0ddd6",paddingTop:8,marginTop:1}}>
+        <div style={{fontSize:13,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#78716c",marginBottom:4}}>Fórmulas aplicadas</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr",gap:"2px"}}>
+        {formulas.map(function(fl,i){return(
+          <div key={i} style={{padding:"3px 6px"}}>
+            <Tex c={fl}/>
+          </div>
+        );})}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── App ─────────────────────────────────────────────────────
+function App(){
+  var _C1=useState(4),C1=_C1[0],sC1=_C1[1];
+  var _C2=useState(6),C2=_C2[0],sC2=_C2[1];
+  var _V=useState(12),V=_V[0],sV=_V[1];
+  var _er=useState(3),er=_er[0],sEr=_er[1];
+  var _topo=useState("paralelo"),topo=_topo[0],sTopo=_topo[1];
+  var _mod=useState("sin_bateria"),mod=_mod[0],sMod=_mod[1];
+  var _mob=useState(false),mob=_mob[0],sMob=_mob[1];
+  var _info=useState(false),showInfo=_info[0],sInfo=_info[1];
+
+  useEffect(function(){var c=function(){sMob(window.innerWidth<768);};c();window.addEventListener("resize",c);return function(){window.removeEventListener("resize",c);};},[]);
+
+  var orig=useMemo(function(){return computeOriginal(C1,C2,V,topo);},[C1,C2,V,topo]);
+  var modified=useMemo(function(){return computeModified(C1,C2,V,er,topo,mod,orig);},[C1,C2,V,er,topo,mod,orig]);
+  var origF=useMemo(function(){return getFormulas(topo,mod,false,C1,C2,V,er);},[topo,mod,C1,C2,V,er]);
+  var modF=useMemo(function(){return getFormulas(topo,mod,true,C1,C2,V,er);},[topo,mod,C1,C2,V,er]);
+
+  var Circ=topo==="serie"?SeriesCirc:ParallelCirc;
+  var dop=0.06+(er-1)*(0.5/9);
+
+  var expl=useMemo(function(){
+    if(topo==="serie"&&mod==="sin_bateria"){
+      var Q=orig.Q1;
+      return "Sin batería, la carga queda atrapada: Q' = "+f(Q)+" μC no cambia. Al crecer C₁' con el dieléctrico, V₁' baja mientras V₂' se mantiene.";
+    }
+    if(topo==="serie"&&mod==="con_bateria")
+      return "La batería mantiene V₁'+V₂' = "+V+" V. Al crecer C₁', Q' aumenta (igual en ambos por estar en serie) y el voltaje se redistribuye: V₁' baja y V₂' sube.";
+    if(topo==="paralelo"&&mod==="sin_bateria"){
+      var Qt=orig.Q1+orig.Q2;
+      return "Sin batería, la carga total Q₁'+Q₂' = Q₁+Q₂ = "+f(Qt)+" μC queda atrapada pero se redistribuye al cambiar C₁'.";
+    }
+    return "La batería fija V = "+V+" V en ambos condensadores. Al crecer C₁', solo Q₁' aumenta; Q₂' no cambia.";
+  },[topo,mod,V,orig]);
+
+  return(
+    <div style={{fontFamily:"'IBM Plex Sans','Segoe UI',system-ui,sans-serif",background:"#f8f7f4",minHeight:"100vh",color:"#1c1917"}}>
+
+      <div style={{padding:mob?"10px 16px":"10px 24px",borderBottom:"1px solid #e0ddd6",background:"#fff",position:"relative"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <span style={{fontSize:20}}>⚡</span>
+          <h1 style={{fontSize:mob?17:19,fontWeight:800,margin:0,letterSpacing:"-0.02em",flex:1}}>Condensadores con Dieléctrico</h1>
+          <button onClick={function(){sInfo(!showInfo);}} style={{width:28,height:28,borderRadius:"50%",border:"1.5px solid #cbd5e1",background:showInfo?"#0e7490":"#f8fafc",color:showInfo?"#fff":"#64748b",fontSize:15,fontWeight:700,fontFamily:"Georgia,serif",fontStyle:"italic",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>i</button>
+        </div>
+        {showInfo&&<div style={{position:"absolute",right:mob?16:24,top:"100%",marginTop:4,background:"#fff",border:"1px solid #e0ddd6",borderRadius:12,padding:"14px 18px",boxShadow:"0 4px 20px rgba(0,0,0,0.1)",zIndex:10,fontSize:13,lineHeight:1.7,color:"#1c1917",minWidth:260}}>
+          <div style={{fontWeight:800,fontSize:14,marginBottom:6}}>Créditos</div>
+          <div>© 2026 Rubén Capeáns Rivas</div>
+          <div>Universidad Rey Juan Carlos</div>
+          <div><a href="mailto:ruben.capeans@urjc.es" style={{color:"#0e7490"}}>ruben.capeans@urjc.es</a></div>
+          <div style={{marginTop:6}}>Licencia: <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" target="_blank" style={{color:"#0e7490"}}>CC BY-NC-SA 4.0</a></div>
+        </div>}
+      </div>
+
+      <div style={{padding:mob?"12px 16px":"14px 24px",borderBottom:"1px solid #e0ddd6",background:"#fff",display:"grid",gridTemplateColumns:mob?"1fr 1fr":"1fr 1fr 1fr 1fr",gap:mob?12:20}}>
+        <Slider label="C₁" value={C1} onChange={sC1} min={1} max={20} step={1} unit=" μF" color={CC}/>
+        <Slider label="C₂" value={C2} onChange={sC2} min={1} max={20} step={1} unit=" μF" color={CC}/>
+        <Slider label="V" value={V} onChange={sV} min={1} max={50} step={1} unit=" V" color={SC}/>
+        <Slider label="εᵣ" value={er} onChange={sEr} min={1} max={10} step={1} unit="" color={CD}/>
+      </div>
+
+      <div style={{padding:mob?"10px 16px":"10px 24px",borderBottom:"1px solid #e0ddd6",background:"#fff",display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:mob?10:16}}>
+        <div>
+          <div style={{fontSize:12,fontWeight:800,color:"#0e7490",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.08em"}}>① Original</div>
+          <Tog options={[{value:"serie",label:"Serie"},{value:"paralelo",label:"Paralelo"}]} value={topo} onChange={sTopo} color="#0e7490"/>
+        </div>
+        <div>
+          <div style={{fontSize:12,fontWeight:800,color:"#7c3aed",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.08em"}}>② Modificado</div>
+          <Tog options={[{value:"sin_bateria",label:"Quitar batería + ε"},{value:"con_bateria",label:"Con batería + ε"}]} value={mod} onChange={sMod} color="#7c3aed"/>
+        </div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:0}}>
+        <div style={{padding:mob?"12px 16px 16px":"14px 24px",borderRight:mob?"none":"1px solid #e0ddd6",borderBottom:mob?"1px solid #e0ddd6":"none",display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.08em",color:"#0e7490",display:"flex",alignItems:"center",gap:8}}>
+            <span style={{width:22,height:22,borderRadius:6,background:"#0e7490",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800}}>1</span>
+            Circuito Original
+          </div>
+          <div style={{display:"flex",justifyContent:"center",padding:"4px 6px",background:"#f1f0ec",borderRadius:12}}>
+            <Circ showBattery={true} dielOnC1={false} vLabel={V+"V"} c1Label={C1+"μF"} c2Label={C2+"μF"} dop={0}/>
+          </div>
+          <Results data={orig} title="Resultados" formulas={origF}/>
+        </div>
+
+        <div style={{padding:mob?"12px 16px 16px":"14px 24px",display:"flex",flexDirection:"column",gap:10,background:mob?"#f8f7f4":"#fdfcfa"}}>
+          <div style={{fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.08em",color:"#7c3aed",display:"flex",alignItems:"center",gap:8}}>
+            <span style={{width:22,height:22,borderRadius:6,background:"#7c3aed",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800}}>2</span>
+            {"Con Dieléctrico "}<span style={{textTransform:"none",fontFamily:"serif",fontSize:15,fontWeight:700,lineHeight:1}}>(<Tex c={"\\varepsilon_r = "+er}/>)</span>
+          </div>
+          <div style={{display:"flex",justifyContent:"center",padding:"4px 6px",background:"#f1f0ec",borderRadius:12}}>
+            <Circ showBattery={mod==="con_bateria"} dielOnC1={true} vLabel={mod==="con_bateria"?V+"V":""} c1Label={modified.C1+"μF"} c2Label={modified.C2+"μF"} dop={dop}/>
+          </div>
+          <Results data={modified} title="Resultados" isModified={true} formulas={modF} explanation={expl}/>
+        </div>
+      </div>
+
+      <div style={{padding:"8px 24px 14px",fontSize:11,color:"#78716c",textAlign:"center",borderTop:"1px solid #e0ddd6"}}>
+        El dieléctrico se inserta siempre en C₁ · Unidades: C en μF, Q en μC, V en V
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
