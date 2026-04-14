@@ -299,18 +299,15 @@ function Results(props){
   );
 }
 
-// ─── App ─────────────────────────────────────────────────────
-function App(){
+// ─── App 2 Condensadores ─────────────────────────────────────
+function App2Cap(props){
+  var mob=props.mob;
   var _C1=useState(4),C1=_C1[0],sC1=_C1[1];
   var _C2=useState(6),C2=_C2[0],sC2=_C2[1];
   var _V=useState(12),V=_V[0],sV=_V[1];
   var _er=useState(3),er=_er[0],sEr=_er[1];
   var _topo=useState("paralelo"),topo=_topo[0],sTopo=_topo[1];
   var _mod=useState("sin_bateria"),mod=_mod[0],sMod=_mod[1];
-  var _mob=useState(false),mob=_mob[0],sMob=_mob[1];
-  var _info=useState(false),showInfo=_info[0],sInfo=_info[1];
-
-  useEffect(function(){var c=function(){sMob(window.innerWidth<768);};c();window.addEventListener("resize",c);return function(){window.removeEventListener("resize",c);};},[]);
 
   var orig=useMemo(function(){return computeOriginal(C1,C2,V,topo);},[C1,C2,V,topo]);
   var modified=useMemo(function(){return computeModified(C1,C2,V,er,topo,mod,orig);},[C1,C2,V,er,topo,mod,orig]);
@@ -334,31 +331,13 @@ function App(){
     return "La batería fija V = "+V+" V en ambos condensadores. Al crecer C₁', solo Q₁' aumenta; Q₂' no cambia.";
   },[topo,mod,V,orig]);
 
-  return(
-    <div style={{fontFamily:"'IBM Plex Sans','Segoe UI',system-ui,sans-serif",background:"#f8f7f4",minHeight:"100vh",color:"#1c1917"}}>
-
-      <div style={{padding:mob?"10px 16px":"10px 24px",borderBottom:"1px solid #e0ddd6",background:"#fff",position:"relative"}}>
-        <div style={{display:"flex",alignItems:"center",gap:10}}>
-          <span style={{fontSize:20}}>⚡</span>
-          <h1 style={{fontSize:mob?17:19,fontWeight:800,margin:0,letterSpacing:"-0.02em",flex:1}}>Condensadores con Dieléctrico</h1>
-          <button onClick={function(){sInfo(!showInfo);}} style={{width:28,height:28,borderRadius:"50%",border:"1.5px solid #cbd5e1",background:showInfo?"#0e7490":"#f8fafc",color:showInfo?"#fff":"#64748b",fontSize:15,fontWeight:700,fontFamily:"Georgia,serif",fontStyle:"italic",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>i</button>
-        </div>
-        {showInfo&&<div style={{position:"absolute",right:mob?16:24,top:"100%",marginTop:4,background:"#fff",border:"1px solid #e0ddd6",borderRadius:12,padding:"14px 18px",boxShadow:"0 4px 20px rgba(0,0,0,0.1)",zIndex:10,fontSize:13,lineHeight:1.7,color:"#1c1917",minWidth:260}}>
-          <div style={{fontWeight:800,fontSize:14,marginBottom:6}}>Créditos</div>
-          <div>© 2026 Rubén Capeáns Rivas</div>
-          <div>Universidad Rey Juan Carlos</div>
-          <div><a href="mailto:ruben.capeans@urjc.es" style={{color:"#0e7490"}}>ruben.capeans@urjc.es</a></div>
-          <div style={{marginTop:6}}>Licencia: <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" target="_blank" style={{color:"#0e7490"}}>CC BY-NC-SA 4.0</a></div>
-        </div>}
-      </div>
-
+  return(<div>
       <div style={{padding:mob?"12px 16px":"14px 24px",borderBottom:"1px solid #e0ddd6",background:"#fff",display:"grid",gridTemplateColumns:mob?"1fr 1fr":"1fr 1fr 1fr 1fr",gap:mob?12:20}}>
         <Slider label="C₁" value={C1} onChange={sC1} min={1} max={20} step={1} unit=" μF" color={CC}/>
         <Slider label="C₂" value={C2} onChange={sC2} min={1} max={20} step={1} unit=" μF" color={CC}/>
         <Slider label="V" value={V} onChange={sV} min={1} max={50} step={1} unit=" V" color={SC}/>
         <Slider label="εᵣ" value={er} onChange={sEr} min={1} max={10} step={1} unit="" color={CD}/>
       </div>
-
       <div style={{padding:mob?"10px 16px":"10px 24px",borderBottom:"1px solid #e0ddd6",background:"#fff",display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:mob?10:16}}>
         <div>
           <div style={{fontSize:12,fontWeight:800,color:"#0e7490",marginBottom:5,textTransform:"uppercase",letterSpacing:"0.08em"}}>① Original</div>
@@ -369,7 +348,6 @@ function App(){
           <Tog options={[{value:"sin_bateria",label:"Quitar batería + ε"},{value:"con_bateria",label:"Con batería + ε"}]} value={mod} onChange={sMod} color="#7c3aed"/>
         </div>
       </div>
-
       <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:0}}>
         <div style={{padding:mob?"12px 16px 16px":"14px 24px",borderRight:mob?"none":"1px solid #e0ddd6",borderBottom:mob?"1px solid #e0ddd6":"none",display:"flex",flexDirection:"column",gap:10}}>
           <div style={{fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.08em",color:"#0e7490",display:"flex",alignItems:"center",gap:8}}>
@@ -381,7 +359,6 @@ function App(){
           </div>
           <Results data={orig} title="Resultados" formulas={origF}/>
         </div>
-
         <div style={{padding:mob?"12px 16px 16px":"14px 24px",display:"flex",flexDirection:"column",gap:10,background:mob?"#f8f7f4":"#fdfcfa"}}>
           <div style={{fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.08em",color:"#7c3aed",display:"flex",alignItems:"center",gap:8}}>
             <span style={{width:22,height:22,borderRadius:6,background:"#7c3aed",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800}}>2</span>
@@ -393,10 +370,118 @@ function App(){
           <Results data={modified} title="Resultados" isModified={true} formulas={modF} explanation={expl}/>
         </div>
       </div>
-
       <div style={{padding:"8px 24px 14px",fontSize:11,color:"#78716c",textAlign:"center",borderTop:"1px solid #e0ddd6"}}>
         El dieléctrico se inserta siempre en C₁ · Unidades: C en μF, Q en μC, V en V
       </div>
+  </div>);
+}
+
+// ─── App 1 Condensador ───────────────────────────────────────
+function getFormulas1(mod,isModified,C,V,er){
+  var B="#b45309",R="#dc2626",P="#c026d3";
+  if(!isModified){var Q=C*V;return["Q = C \\cdot V = "+C+"\\cdot"+V+" = \\color{"+B+"}{"+f(Q)+"\\;\\mu\\text{C}}","V_C = V = \\color{"+R+"}{"+V+"\\;\\text{V}}"];}
+  var Cp=er*C;
+  if(mod==="sin_bateria"){var Qo=C*V,Vp=Qo/Cp;return["C' = \\varepsilon_r \\cdot C = "+er+"\\cdot"+C+" = \\color{"+P+"}{"+Cp+"\\;\\mu\\text{F}}","Q' = Q_{\\text{orig}} = \\color{"+B+"}{"+f(Qo)+"\\;\\mu\\text{C}}","V' = \\frac{Q'}{C'} = \\frac{"+f(Qo)+"}{"+Cp+"} = \\color{"+R+"}{"+f(Vp)+"\\;\\text{V}}"];}
+  var Qn=Cp*V;return["C' = \\varepsilon_r \\cdot C = "+er+"\\cdot"+C+" = \\color{"+P+"}{"+Cp+"\\;\\mu\\text{F}}","V' = V = \\color{"+R+"}{"+V+"\\;\\text{V}} \\quad(\\text{batería fija})","Q' = C' \\cdot V = "+Cp+"\\cdot"+V+" = \\color{"+B+"}{"+f(Qn)+"\\;\\mu\\text{C}}"];
+}
+
+function SingleCircuit(props){
+  var showBat=props.showBattery,diel=props.diel,vLabel=props.vLabel,cLabel=props.cLabel,dop=props.dop;
+  var W=280,H=145,top=30,bot=H-12,left=55,right=W-55,my=(top+bot)/2,cx=(left+right)/2;
+  return(<svg viewBox={"0 0 "+W+" "+H} width="100%" style={{maxWidth:480}}>
+    <line x1={left} y1={top} x2={cx-19} y2={top} stroke={WC} strokeWidth={2.5}/>
+    <line x1={cx+19} y1={top} x2={right} y2={top} stroke={WC} strokeWidth={2.5}/>
+    <line x1={right} y1={top} x2={right} y2={bot} stroke={WC} strokeWidth={2.5}/>
+    <line x1={left} y1={bot} x2={right} y2={bot} stroke={WC} strokeWidth={2.5}/>
+    <line x1={left} y1={top} x2={left} y2={my-16} stroke={WC} strokeWidth={2.5}/>
+    <line x1={left} y1={my+16} x2={left} y2={bot} stroke={WC} strokeWidth={2.5}/>
+    <Cap x={cx} y={top} diel={diel} label={cLabel} dop={dop}/>
+    <Bat x={left} y={my} dimmed={!showBat} label={vLabel}/>
+    {!showBat&&<XMark x={left} y={my}/>}
+  </svg>);
+}
+
+function Results1(props){
+  var data=props.data,title=props.title,isModified=props.isModified,formulas=props.formulas,explanation=props.explanation;
+  var p=isModified?"'":"";
+  var rows=[{l:"C"+p,v:f(data.C)+"\\;\\mu\\text{F}",c:isModified?CD:CC},{l:"Q"+p,v:f(data.Q)+"\\;\\mu\\text{C}",c:"#b45309"},{l:"V"+p,v:f(data.V)+"\\;\\text{V}",c:"#dc2626"}];
+  return(
+    <div style={{background:"#fff",border:"1px solid #e0ddd6",borderRadius:14,padding:"12px 16px",display:"flex",flexDirection:"column",gap:8}}>
+      <div style={{lineHeight:1.5}}>
+        <span style={{fontSize:15,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.06em",color:"#78716c"}}>{title}</span>
+        {explanation&&<span style={{fontSize:13,color:"#78580a",fontWeight:500,marginLeft:8}}>{explanation}</span>}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:5}}>
+        {rows.map(function(r){return(<div key={r.l} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#f1f0ec",borderRadius:8,padding:"5px 12px"}}><span style={{fontSize:16}}><Tex c={"\\color{"+r.c+"}{"+r.l+"}"}/></span><span style={{fontSize:16}}><Tex c={r.v}/></span></div>)})}
+      </div>
+      <div style={{borderTop:"1px solid #e0ddd6",paddingTop:8,marginTop:1}}>
+        <div style={{fontSize:13,fontWeight:700,textTransform:"uppercase",letterSpacing:"0.06em",color:"#78716c",marginBottom:4}}>Fórmulas aplicadas</div>
+        {formulas.map(function(fl,i){return(<div key={i} style={{padding:"3px 6px"}}><Tex c={fl}/></div>)})}
+      </div>
+    </div>);
+}
+
+function App1Cap(props){
+  var mob=props.mob;
+  var _C=useState(6),C=_C[0],sC=_C[1],_V=useState(12),V=_V[0],sV=_V[1],_er=useState(3),er=_er[0],sEr=_er[1],_mod=useState("sin_bateria"),mod=_mod[0],sMod=_mod[1];
+  var Cp=er*C,origData={C:C,Q:C*V,V:V},modData;
+  if(mod==="sin_bateria"){var Qo=C*V;modData={C:Cp,Q:Qo,V:Qo/Cp}}else{modData={C:Cp,Q:Cp*V,V:V}}
+  var origF=useMemo(function(){return getFormulas1(mod,false,C,V,er)},[mod,C,V,er]);
+  var modF=useMemo(function(){return getFormulas1(mod,true,C,V,er)},[mod,C,V,er]);
+  var dop=0.06+(er-1)*(0.5/9);
+  var expl=mod==="sin_bateria"?"Sin batería, la carga queda atrapada: Q' = "+f(C*V)+" μC no cambia. Al crecer C', V' disminuye.":"La batería mantiene V' = "+V+" V. Al crecer C', Q' aumenta proporcionalmente a ε_r.";
+  return(<div>
+    <div style={{padding:mob?"12px 16px":"14px 24px",borderBottom:"1px solid #e0ddd6",background:"#fff",display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:mob?12:20}}>
+      <Slider label="C" value={C} onChange={sC} min={1} max={20} step={1} unit=" μF" color={CC}/>
+      <Slider label="V" value={V} onChange={sV} min={1} max={50} step={1} unit=" V" color={SC}/>
+      <Slider label="εᵣ" value={er} onChange={sEr} min={1} max={10} step={1} unit="" color={CD}/>
+    </div>
+    <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:0,borderBottom:"1px solid #e0ddd6",background:"#fff"}}><div style={{padding:mob?"0":"10px 24px",display:mob?"none":"block"}}></div><div style={{padding:mob?"10px 16px":"10px 24px"}}><Tog options={[{value:"sin_bateria",label:"Quitar batería + ε"},{value:"con_bateria",label:"Con batería + ε"}]} value={mod} onChange={sMod} color="#7c3aed"/></div></div>
+    <div style={{display:"grid",gridTemplateColumns:mob?"1fr":"1fr 1fr",gap:0}}>
+      <div style={{padding:mob?"12px 16px 16px":"14px 24px",borderRight:mob?"none":"1px solid #e0ddd6",borderBottom:mob?"1px solid #e0ddd6":"none",display:"flex",flexDirection:"column",gap:10}}>
+        <div style={{fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.08em",color:"#0e7490",display:"flex",alignItems:"center",gap:8}}><span style={{width:22,height:22,borderRadius:6,background:"#0e7490",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800}}>1</span>Circuito Original</div>
+        <div style={{display:"flex",justifyContent:"center",padding:"4px 6px",background:"#f1f0ec",borderRadius:12}}><SingleCircuit showBattery={true} diel={false} vLabel={V+"V"} cLabel={C+"μF"} dop={0}/></div>
+        <Results1 data={origData} title="Resultados" formulas={origF}/>
+      </div>
+      <div style={{padding:mob?"12px 16px 16px":"14px 24px",display:"flex",flexDirection:"column",gap:10,background:mob?"#f8f7f4":"#fdfcfa"}}>
+        <div style={{fontSize:13,fontWeight:800,textTransform:"uppercase",letterSpacing:"0.08em",color:"#7c3aed",display:"flex",alignItems:"center",gap:8}}><span style={{width:22,height:22,borderRadius:6,background:"#7c3aed",color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800}}>2</span>{"Con Dieléctrico "}<span style={{textTransform:"none",fontFamily:"serif",fontSize:15,fontWeight:700,lineHeight:1}}>(<Tex c={"\\varepsilon_r = "+er}/>)</span></div>
+        <div style={{display:"flex",justifyContent:"center",padding:"4px 6px",background:"#f1f0ec",borderRadius:12}}><SingleCircuit showBattery={mod==="con_bateria"} diel={true} vLabel={mod==="con_bateria"?V+"V":""} cLabel={Cp+"μF"} dop={dop}/></div>
+        <Results1 data={modData} title="Resultados" isModified={true} formulas={modF} explanation={expl}/>
+      </div>
+    </div>
+    <div style={{padding:"8px 24px 14px",fontSize:11,color:"#78716c",textAlign:"center",borderTop:"1px solid #e0ddd6"}}>Unidades: C en μF, Q en μC, V en V</div>
+  </div>);
+}
+
+// ─── Main App ────────────────────────────────────────────────
+function App(){
+  var _mode=useState("1"),mode=_mode[0],sMode=_mode[1];
+  var _mob=useState(false),mob=_mob[0],sMob=_mob[1];
+  var _info=useState(false),showInfo=_info[0],sInfo=_info[1];
+  useEffect(function(){var c=function(){sMob(window.innerWidth<768)};c();window.addEventListener("resize",c);return function(){window.removeEventListener("resize",c)}},[]);
+  var bs=function(a){return{padding:"6px 16px",border:"none",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:a?800:600,fontFamily:"'JetBrains Mono',monospace",background:a?"#1c1917":"transparent",color:a?"#fff":"#78716c",transition:"all .15s"}};
+  return(
+    <div style={{fontFamily:"'IBM Plex Sans','Segoe UI',system-ui,sans-serif",background:"#f8f7f4",minHeight:"100vh",color:"#1c1917"}}>
+      <div style={{padding:mob?"10px 12px":"10px 24px",borderBottom:"1px solid #e0ddd6",background:"#fff",position:"relative"}}>
+        <div style={{display:"flex",alignItems:"center",gap:mob?6:10,flexWrap:"wrap"}}>
+          <span style={{fontSize:20}}>⚡</span>
+          <h1 style={{fontSize:mob?15:19,fontWeight:800,margin:0,letterSpacing:"-0.02em"}}>Condensadores con Dieléctrico</h1>
+          <div style={{display:"flex",background:"#f1f0ec",borderRadius:10,padding:2,marginLeft:mob?0:8}}>
+            <button onClick={function(){sMode("1")}} style={bs(mode==="1")}>1 Condensador</button>
+            <button onClick={function(){sMode("2")}} style={bs(mode==="2")}>2 Condensadores</button>
+          </div>
+          <div style={{flex:1}}/>
+          <button onClick={function(){sInfo(!showInfo)}} style={{width:28,height:28,borderRadius:"50%",border:"1.5px solid #cbd5e1",background:showInfo?"#0e7490":"#f8fafc",color:showInfo?"#fff":"#64748b",fontSize:15,fontWeight:700,fontFamily:"Georgia,serif",fontStyle:"italic",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1}}>i</button>
+        </div>
+        {showInfo&&<div style={{position:"absolute",right:mob?12:24,top:"100%",marginTop:4,background:"#fff",border:"1px solid #e0ddd6",borderRadius:12,padding:"14px 18px",boxShadow:"0 4px 20px rgba(0,0,0,0.1)",zIndex:10,fontSize:13,lineHeight:1.7,minWidth:260}}>
+          <div style={{fontWeight:800,fontSize:14,marginBottom:6}}>Créditos</div>
+          <div>© 2026 Rubén Capeáns Rivas</div>
+          <div>Universidad Rey Juan Carlos</div>
+          <div><a href="mailto:ruben.capeans@urjc.es" style={{color:"#0e7490"}}>ruben.capeans@urjc.es</a></div>
+          <div style={{marginTop:6}}>Licencia: <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" target="_blank" style={{color:"#0e7490"}}>CC BY-NC-SA 4.0</a></div>
+        </div>}
+      </div>
+      {mode==="1"?<App1Cap mob={mob}/>:<App2Cap mob={mob}/>}
     </div>
   );
 }
