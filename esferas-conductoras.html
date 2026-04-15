@@ -1,0 +1,662 @@
+<!--
+  =========================================================================
+  Descarga de Esferas Conductoras - Simulador Didáctico Interactivo
+  =========================================================================
+
+  © 2026 Rubén Capeáns Rivas
+  Universidad Rey Juan Carlos (URJC)
+  ruben.capeans@urjc.es
+
+  Esta obra está bajo una licencia Creative Commons
+  Atribución-NoComercial-CompartirIgual 4.0 Internacional (CC BY-NC-SA 4.0).
+  https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es
+
+  =========================================================================
+-->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⚡ Descarga de Esferas Conductoras</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,800;1,9..40,400&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #root { width: 100%; height: 100%; overflow: hidden; background: #f5f6f8; }
+body { overscroll-behavior: none; -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+var { useState, useRef, useCallback, useEffect, useMemo } = React;
+
+var K_COULOMB = 8.99e9;
+
+/*
+ * Descarga de Esferas Conductoras - Simulador Didáctico Interactivo
+ * © 2026 Rubén Capeáns Rivas — Universidad Rey Juan Carlos
+ * Licencia: CC BY-NC-SA 4.0
+ * https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es
+ */
+
+var COL = {
+  bg: "#f5f6f8", panel: "#fff", border: "#e2e4ea",
+  text: "#1e1e2e", dim: "#6b7280", bright: "#111827",
+  accent: "#6366f1", accentBg: "#eef2ff",
+  danger: "#dc2626",
+  s1: "#2563eb", s1Light: "#bfdbfe",
+  s2: "#dc2626", s2Light: "#fecaca",
+  gnd: "#16a34a", gndLight: "#bbf7d0",
+  grid: "#e8e9ed",
+  pos: "#dc2626",
+};
+
+function fmt(val, unit) {
+  var a = Math.abs(val);
+  if (a === 0) return "0 " + unit;
+  if (a >= 1e-3) return val.toFixed(2) + " " + unit;
+  if (a >= 1e-6) return (val * 1e6).toFixed(2) + " \u03bc" + unit;
+  if (a >= 1e-9) return (val * 1e9).toFixed(2) + " n" + unit;
+  return (val * 1e12).toFixed(2) + " p" + unit;
+}
+function fmtV(val) {
+  return val.toFixed(2) + " V";
+}
+var SUPS = "\u2070\u00b9\u00b2\u00b3\u2074\u2075\u2076\u2077\u2078\u2079";
+function sup(n) { return String(n).split("").map(function(d) { return SUPS[parseInt(d)]; }).join(""); }
+
+var S1C = { x: 280, y: 270 };
+var GND = { x: 660, y: 430 };
+var REST = { x: 560, y: 250 };
+
+function App() {
+  var [r1cm, setR1cm] = useState(10);
+  var [r2cm, setR2cm] = useState(5);
+  var [v0, setV0] = useState(1000);
+  var [showInfo, setShowInfo] = useState(false);
+
+  var r1 = r1cm / 100;
+  var r2 = r2cm / 100;
+  var q0 = v0 * r1 / K_COULOMB;
+  var ratio = r1 / (r1 + r2);
+
+  var s1r = Math.max(80, Math.min(220, r1cm * 18));
+  var s2r = Math.max(30, Math.min(100, r2cm * 12));
+
+  var [q1, setQ1] = useState(q0);
+  var [q2, setQ2] = useState(0);
+  var [iter, setIter] = useState(0);
+  var [hist, setHist] = useState([{ n: 0, q1: q0, q2: 0 }]);
+  var [phase, setPhase] = useState("idle");
+  var [s2pos, setS2pos] = useState({ x: REST.x, y: REST.y });
+  var [dragging, setDragging] = useState(false);
+  var svgRef = useRef(null);
+  var dragOff = useRef({ x: 0, y: 0 });
+  var st = useRef({ q1: q0, q2: 0, iter: 0, phase: "idle" });
+
+  useEffect(function() { st.current = { q1: q1, q2: q2, iter: iter, phase: phase }; }, [q1, q2, iter, phase]);
+
+  var v1 = q1 !== 0 ? (K_COULOMB * q1) / r1 : 0;
+  var v2 = q2 !== 0 ? (K_COULOMB * q2) / r2 : 0;
+
+  useEffect(function() {
+    var nq = v0 * (r1cm / 100) / K_COULOMB;
+    setQ1(nq); setQ2(0); setIter(0);
+    setHist([{ n: 0, q1: nq, q2: 0 }]);
+    setPhase("idle"); setS2pos({ x: REST.x, y: REST.y });
+  }, [r1cm, r2cm, v0]);
+
+  var doTouch = useCallback(function() {
+    var s = st.current;
+    if (s.phase !== "idle") return;
+    var tot = s.q1 + s.q2;
+    var nq1 = tot * r1 / (r1 + r2);
+    var nq2 = tot * r2 / (r1 + r2);
+    var ni = s.iter + 1;
+    setQ1(nq1); setQ2(nq2); setIter(ni);
+    setHist(function(p) { return p.concat([{ n: ni, q1: nq1, q2: nq2, event: "touch" }]); });
+    setPhase("touched");
+    st.current = { q1: nq1, q2: nq2, iter: ni, phase: "touched" };
+  }, [r1, r2]);
+
+  var doGround = useCallback(function() {
+    var s = st.current;
+    if (s.phase !== "touched") return;
+    setQ2(0); setPhase("idle");
+    st.current = { q1: st.current.q1, q2: 0, iter: st.current.iter, phase: "idle" };
+  }, []);
+
+  var resetAll = function() {
+    var nq = v0 * r1 / K_COULOMB;
+    setQ1(nq); setQ2(0); setIter(0);
+    setHist([{ n: 0, q1: nq, q2: 0 }]);
+    setPhase("idle"); setS2pos({ x: REST.x, y: REST.y });
+  };
+
+  var autoRun = useCallback(function(n) {
+    var cq1 = q0, cq2 = 0;
+    var h = [{ n: 0, q1: q0, q2: 0 }];
+    for (var i = 1; i <= n; i++) {
+      var tot = cq1 + cq2;
+      cq1 = tot * r1 / (r1 + r2);
+      cq2 = tot * r2 / (r1 + r2);
+      h.push({ n: i, q1: cq1, q2: cq2, event: "touch" });
+      cq2 = 0;
+    }
+    setQ1(cq1); setQ2(0); setIter(n);
+    setHist(h); setPhase("idle"); setS2pos({ x: REST.x, y: REST.y });
+  }, [q0, r1, r2]);
+
+  var getSvgPt = useCallback(function(e) {
+    var svg = svgRef.current;
+    if (!svg) return { x: 0, y: 0 };
+    var rect = svg.getBoundingClientRect();
+    var cx = e.touches ? e.touches[0].clientX : e.clientX;
+    var cy = e.touches ? e.touches[0].clientY : e.clientY;
+    return { x: (cx - rect.left) * (800 / rect.width), y: (cy - rect.top) * (500 / rect.height) };
+  }, []);
+
+  var handleDown = useCallback(function(e) {
+    var pt = getSvgPt(e);
+    var dx = pt.x - s2pos.x, dy = pt.y - s2pos.y;
+    if (Math.sqrt(dx * dx + dy * dy) < s2r + 18) {
+      setDragging(true);
+      dragOff.current = { x: dx, y: dy };
+      e.preventDefault();
+    }
+  }, [s2pos, s2r, getSvgPt]);
+
+  var handleMove = useCallback(function(e) {
+    if (!dragging) return;
+    e.preventDefault();
+    var pt = getSvgPt(e);
+    var x = pt.x - dragOff.current.x;
+    var y = pt.y - dragOff.current.y;
+
+    // Sphere 1: solid circle, push to tangent
+    var dx1 = x - S1C.x, dy1 = y - S1C.y;
+    var dist1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+    var minD1 = s1r + s2r + 1;
+    var touchingS1 = false;
+    if (dist1 < minD1 && dist1 > 0.01) {
+      x = S1C.x + (dx1 / dist1) * minD1;
+      y = S1C.y + (dy1 / dist1) * minD1;
+      touchingS1 = true;
+    } else if (dist1 <= minD1 + 5) {
+      touchingS1 = true;
+    }
+
+    // Ground: the top line is a solid floor the sphere can't cross
+    // Line at y = GND.y-7, from x = GND.x-16 to GND.x+16
+    var lineY = GND.y - 21;
+    var lineX1 = GND.x - 48;
+    var lineX2 = GND.x + 48;
+    var touchingGnd = false;
+    // Only block when horizontally overlapping the line (with sphere width margin)
+    if (x > lineX1 - s2r && x < lineX2 + s2r) {
+      var minY = lineY - s2r;
+      if (y > minY) {
+        y = minY;
+        touchingGnd = true;
+      } else if (y > minY - 5) {
+        touchingGnd = true;
+      }
+    }
+
+    setS2pos({ x: x, y: y });
+
+    if (touchingS1 && st.current.phase === "idle") doTouch();
+    if (touchingGnd && st.current.phase === "touched") doGround();
+  }, [dragging, getSvgPt, s1r, s2r, doTouch, doGround]);
+
+  var handleUp = useCallback(function() { if (dragging) setDragging(false); }, [dragging]);
+
+  var btnTouch = useCallback(function() {
+    if (phase !== "idle") return;
+    var tx = S1C.x + s1r + s2r + 2, ty = S1C.y;
+    var sx = s2pos.x, sy = s2pos.y;
+    var dur = 350, t0 = performance.now();
+    var anim = function(now) {
+      var t = Math.min(1, (now - t0) / dur);
+      var e = 1 - Math.pow(1 - t, 3);
+      setS2pos({ x: sx + (tx - sx) * e, y: sy + (ty - sy) * e });
+      if (t < 1) requestAnimationFrame(anim); else doTouch();
+    };
+    requestAnimationFrame(anim);
+  }, [phase, s2pos, s1r, s2r, doTouch]);
+
+  var btnGround = useCallback(function() {
+    if (phase !== "touched") return;
+    var sx = s2pos.x, sy = s2pos.y;
+    var dur = 350, t0 = performance.now();
+    var anim = function(now) {
+      var t = Math.min(1, (now - t0) / dur);
+      var e = 1 - Math.pow(1 - t, 3);
+      setS2pos({ x: sx + (GND.x - sx) * e, y: sy + (GND.y - sy) * e });
+      if (t < 1) requestAnimationFrame(anim);
+      else { doGround(); setTimeout(function() { setS2pos({ x: REST.x, y: REST.y }); }, 400); }
+    };
+    requestAnimationFrame(anim);
+  }, [phase, s2pos, doGround]);
+
+  var chartData = useMemo(function() {
+    var pts = hist.filter(function(_, i) { return i === 0 || hist[i].event === "touch"; });
+    if (pts.length < 2) return null;
+    return { points: pts, maxQ: pts[0].q1, maxN: pts[pts.length - 1].n };
+  }, [hist]);
+
+  var qi = function(q) { return q0 > 0 ? Math.min(1, Math.abs(q) / q0) : 0; };
+
+  var instText = phase === "idle"
+    ? "Arrastra la esfera 2 hasta tocar la esfera 1"
+    : "Arrastra la esfera 2 a tierra \u23DA para descargarla";
+
+  var params = [
+    { label: "Radio esfera 1", val: r1cm, unit: "cm", color: COL.s1, min: 1, max: 30, step: 1, set: setR1cm },
+    { label: "Potencial inicial V\u2080", val: v0, unit: "V", color: COL.s1, min: 100, max: 5000, step: 100, set: setV0 },
+    { label: "Radio esfera 2", val: r2cm, unit: "cm", color: COL.s2, min: 1, max: 30, step: 1, set: setR2cm },
+  ];
+
+  var sphereInfo = [
+    { name: "Esfera 1", r: r1cm, q: q1, v: v1, color: COL.s1, sub: "\u2081" },
+    { name: "Esfera 2", r: r2cm, q: q2, v: v2, color: COL.s2, sub: "\u2082" },
+  ];
+
+  var actions = [
+    { label: "Tocar", on: phase === "idle", fn: btnTouch, ac: COL.accent, bg: COL.accentBg },
+    { label: "Descargar \u23DA", on: phase === "touched", fn: btnGround, ac: COL.gnd, bg: COL.gndLight },
+    { label: "5 iteraciones", on: true, fn: function() { autoRun(5); }, ac: COL.bright, bg: "#f8fafc" },
+    { label: "20 iteraciones", on: true, fn: function() { autoRun(20); }, ac: COL.bright, bg: "#f8fafc" },
+  ];
+
+  return (
+    <div style={{
+      width: "100%", height: "100vh", background: COL.bg,
+      fontFamily: "'DM Sans', 'Nunito', system-ui, sans-serif",
+      color: COL.text, display: "flex", flexDirection: "column", overflow: "hidden",
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: "12px 20px", background: COL.panel,
+        borderBottom: "1px solid " + COL.border,
+        display: "flex", alignItems: "center", gap: 12, flexShrink: 0,
+      }}>
+        <div style={{
+          width: 34, height: 34, borderRadius: 10,
+          background: "linear-gradient(135deg, " + COL.s1 + ", " + COL.s2 + ")",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "#fff", fontWeight: 800, fontSize: 17, flexShrink: 0,
+        }}>{"\u26A1"}</div>
+        <div style={{ flex: 1, minWidth: 150 }}>
+          <div style={{ fontSize: 15, fontWeight: 800, letterSpacing: "-0.02em", color: COL.bright }}>
+            Descarga de esferas conductoras
+          </div>
+          <div style={{ fontSize: 11, color: COL.dim, marginTop: 1 }}>
+            Simulador interactivo &middot; Arrastra, toca, descarga
+          </div>
+        </div>
+        <div style={{ position: "relative" }}>
+          <button onClick={function() { setShowInfo(function(v) { return !v; }); }} style={{
+            width: 28, height: 28, borderRadius: "50%",
+            border: "1.5px solid #cbd5e1",
+            background: showInfo ? "#0e7490" : "#f8fafc",
+            color: showInfo ? "#fff" : "#64748b",
+            fontSize: 15, fontWeight: 700, fontFamily: "Georgia, serif", fontStyle: "italic",
+            cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", lineHeight: 1,
+          }}>i</button>
+          {showInfo && <div style={{
+            position: "absolute", right: 0, top: "100%", marginTop: 4,
+            background: "#fff", border: "1px solid #e0ddd6", borderRadius: 12,
+            padding: "14px 18px", boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+            zIndex: 10, fontSize: 13, lineHeight: 1.7, minWidth: 260,
+          }}>
+            <div style={{ fontWeight: 800, fontSize: 14, marginBottom: 6 }}>{"Cr\u00e9ditos"}</div>
+            <div>{"\u00a9 2026 Rub\u00e9n Cape\u00e1ns Rivas"}</div>
+            <div>Universidad Rey Juan Carlos</div>
+            <div><a href="mailto:ruben.capeans@urjc.es" style={{ color: "#0e7490" }}>ruben.capeans@urjc.es</a></div>
+            <div style={{ marginTop: 6 }}>{"Licencia: "}<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" target="_blank" style={{ color: "#0e7490" }}>CC BY-NC-SA 4.0</a></div>
+          </div>}
+        </div>
+      </div>
+
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        {/* Left panel */}
+        <div style={{
+          width: 260, minWidth: 220, background: COL.panel,
+          borderRight: "1px solid " + COL.border,
+          display: "flex", flexDirection: "column", overflowY: "auto", flexShrink: 0,
+        }}>
+          {/* Params */}
+          <div style={{ padding: "12px 14px", borderBottom: "1px solid " + COL.border }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", color: COL.dim, letterSpacing: "0.08em", marginBottom: 10 }}>
+              Par&aacute;metros
+            </div>
+            {params.map(function(p, i) {
+              return (
+                <label key={i} style={{ display: "block", marginBottom: i < 2 ? 12 : 2 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: COL.bright }}>{p.label}</span>
+                    <span style={{ fontSize: 11.5, fontFamily: "'JetBrains Mono', monospace", fontWeight: 600, color: p.color }}>
+                      {p.val} {p.unit}
+                    </span>
+                  </div>
+                  <input type="range" min={p.min} max={p.max} step={p.step}
+                    value={p.val} onChange={function(e) { p.set(+e.target.value); }}
+                    style={{ width: "100%", accentColor: p.color }} />
+                </label>
+              );
+            })}
+          </div>
+
+          {/* Formulas */}
+          <div style={{ padding: "12px 14px", borderBottom: "1px solid " + COL.border }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", color: COL.dim, letterSpacing: "0.08em", marginBottom: 8 }}>
+              Desarrollo
+            </div>
+            <div style={{
+              fontSize: 11, lineHeight: 2, color: COL.bright,
+              fontFamily: "'JetBrains Mono', monospace",
+              background: COL.bg, padding: "10px 12px", borderRadius: 8,
+            }}>
+              <div style={{ fontSize: 10, color: COL.dim, fontFamily: "'DM Sans', sans-serif", marginBottom: 4, lineHeight: 1.5 }}>
+                <span style={{ color: COL.s1, fontWeight: 700 }}>{"Q\u2081, V\u2081"}</span>{" = grande (azul, R\u2081 = " + r1cm + " cm)"}
+                <br />
+                <span style={{ color: COL.s2, fontWeight: 700 }}>{"Q\u2082, V\u2082"}</span>{" = peque\u00f1a (roja, R\u2082 = " + r2cm + " cm)"}
+                <br />
+                {"Super\u00edndice = iteraci\u00f3n"}
+              </div>
+
+              <div style={{ fontWeight: 700, color: COL.s1, marginTop: 6 }}>{"Estado inicial:"}</div>
+              <div>{"Q\u2081" + sup(0) + " = V\u2080\u00b7R\u2081/k = " + fmt(q0, "C")}</div>
+              <div>{"V\u2081" + sup(0) + " = " + v0 + " V"}</div>
+              <div>{"Q\u2082" + sup(0) + " = 0, V\u2082" + sup(0) + " = 0"}</div>
+
+              <div style={{ fontWeight: 700, color: COL.s1, marginTop: 8 }}>{"Tocar \u2192 se igualan potenciales:"}</div>
+              <div style={{ color: COL.dim, fontSize: 10, fontFamily: "'DM Sans', sans-serif" }}>{"Potencial en superficie: V = kQ/R"}</div>
+              <div>{"V\u2081" + sup(Math.max(1, iter)) + " = V\u2082" + sup(Math.max(1, iter)) + " \u2192 kQ\u2081" + sup(Math.max(1, iter)) + "/R\u2081 = kQ\u2082" + sup(Math.max(1, iter)) + "/R\u2082"}</div>
+              <div style={{ color: COL.dim, fontSize: 10, fontFamily: "'DM Sans', sans-serif" }}>{"Simplificando k:"}</div>
+              <div>{"Q\u2082" + sup(Math.max(1, iter)) + " = Q\u2081" + sup(Math.max(1, iter)) + "\u00b7R\u2082/R\u2081"}</div>
+              <div style={{ color: COL.dim, fontSize: 10, fontFamily: "'DM Sans', sans-serif" }}>{"Conservaci\u00f3n de carga (Q\u2082 estaba a 0):"}</div>
+              <div>{"Q\u2081" + sup(Math.max(1, iter)) + " + Q\u2082" + sup(Math.max(1, iter)) + " = Q\u2081" + sup(Math.max(1, iter) - 1)}</div>
+              <div style={{ color: COL.dim, fontSize: 10, fontFamily: "'DM Sans', sans-serif" }}>{"Sustituyendo Q\u2082" + sup(Math.max(1, iter)) + ":"}</div>
+              <div>{"Q\u2081" + sup(Math.max(1, iter)) + " + Q\u2081" + sup(Math.max(1, iter)) + "\u00b7R\u2082/R\u2081 = Q\u2081" + sup(Math.max(1, iter) - 1)}</div>
+              <div>{"Q\u2081" + sup(Math.max(1, iter)) + "\u00b7(R\u2081+R\u2082)/R\u2081 = Q\u2081" + sup(Math.max(1, iter) - 1)}</div>
+              <div style={{ color: COL.dim, fontSize: 10, fontFamily: "'DM Sans', sans-serif" }}>{"Despejando:"}</div>
+              <div style={{ color: COL.s1, fontWeight: 700 }}>{"Q\u2081" + sup(Math.max(1, iter)) + " = Q\u2081" + sup(Math.max(1, iter) - 1) + "\u00b7R\u2081/(R\u2081+R\u2082)"}</div>
+              <div style={{ color: COL.s2, fontWeight: 700 }}>{"Q\u2082" + sup(Math.max(1, iter)) + " = Q\u2081" + sup(Math.max(1, iter) - 1) + "\u00b7R\u2082/(R\u2081+R\u2082)"}</div>
+
+              <div style={{ fontWeight: 700, color: COL.gnd, marginTop: 8 }}>{"Tierra:"}</div>
+              <div>{"Q\u2082" + sup(Math.max(1, iter)) + " \u2192 0"}</div>
+
+              <div style={{ fontWeight: 700, color: COL.accent, marginTop: 8 }}>{"General:"}</div>
+              <div style={{ fontWeight: 700 }}>{"Q\u2081\u207f = Q\u2081\u2070 \u00b7 (R\u2081/(R\u2081+R\u2082))\u207f"}</div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div style={{ padding: "12px 14px", borderBottom: "1px solid " + COL.border }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", color: COL.dim, letterSpacing: "0.08em", marginBottom: 8 }}>
+              Acciones r&aacute;pidas
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5 }}>
+              {actions.map(function(b, i) {
+                return (
+                  <button key={i} onClick={b.fn} disabled={!b.on} style={{
+                    padding: "7px 5px", borderRadius: 8, fontSize: 11, fontWeight: 700,
+                    background: b.on ? b.bg : "#f8fafc",
+                    border: "1px solid " + (b.on ? b.ac + "44" : COL.border),
+                    color: b.on ? b.ac : COL.dim,
+                    cursor: b.on ? "pointer" : "default",
+                    opacity: b.on ? 1 : 0.5,
+                  }}>{b.label}</button>
+                );
+              })}
+            </div>
+            <button onClick={resetAll} style={{
+              marginTop: 6, width: "100%", padding: "7px", borderRadius: 8,
+              fontSize: 11, fontWeight: 700,
+              background: COL.danger + "08", border: "1px solid " + COL.danger + "22",
+              color: COL.danger, cursor: "pointer",
+            }}>Reiniciar</button>
+          </div>
+
+        </div>
+
+        {/* Main — two halves */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "row", minWidth: 0 }}>
+          {/* Left half: simulation */}
+          <div style={{
+            flex: 1, display: "flex", flexDirection: "column", minWidth: 0,
+          }}>
+            {/* Top info bar */}
+            <div style={{
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+              padding: "8px 16px", background: COL.accentBg, borderBottom: "1px solid " + COL.accent + "22",
+            }}>
+              <span style={{ fontSize: 20, fontWeight: 800, color: COL.accent, fontFamily: "'JetBrains Mono', monospace" }}>
+                {"n = " + iter}
+              </span>
+              <span style={{ fontSize: 18, fontWeight: 700, color: COL.bright, fontFamily: "'JetBrains Mono', monospace" }}>
+                {"Q\u2081 + Q\u2082 = " + fmt(q1 + q2, "C")}
+              </span>
+            </div>
+            <div style={{
+              flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
+              padding: 10, position: "relative", minWidth: 0,
+            }}>
+            <svg ref={svgRef} viewBox="0 0 800 500" style={{
+              maxWidth: "100%", maxHeight: "100%", width: "100%", height: "100%",
+              background: "#fff", borderRadius: 12, border: "1px solid " + COL.border,
+              touchAction: "none", cursor: dragging ? "grabbing" : "default", userSelect: "none",
+            }}
+              onMouseDown={handleDown} onMouseMove={handleMove}
+              onMouseUp={handleUp} onMouseLeave={function() { if (dragging) handleUp(); }}
+              onTouchStart={handleDown} onTouchMove={handleMove} onTouchEnd={handleUp}
+            >
+              <defs>
+                <radialGradient id="rg1">
+                  <stop offset="0%" stopColor={COL.s1Light} stopOpacity={0.5 + 0.5 * qi(q1)} />
+                  <stop offset="100%" stopColor={COL.s1} stopOpacity={0.05} />
+                </radialGradient>
+                <radialGradient id="rg2">
+                  <stop offset="0%" stopColor={COL.s2Light} stopOpacity={0.5 + 0.5 * qi(q2)} />
+                  <stop offset="100%" stopColor={COL.s2} stopOpacity={0.05} />
+                </radialGradient>
+                <filter id="sh1" x="-50%" y="-50%" width="200%" height="200%">
+                  <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor={COL.s1} floodOpacity="0.18"/>
+                </filter>
+                <filter id="sh2" x="-50%" y="-50%" width="200%" height="200%">
+                  <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor={COL.s2} floodOpacity="0.18"/>
+                </filter>
+              </defs>
+
+              {/* Ground */}
+              <g transform={"translate(" + GND.x + "," + GND.y + ")"}>
+                <line x1={-48} y1={-21} x2={48} y2={-21}
+                  stroke={COL.gnd} strokeWidth={6} strokeLinecap="round" />
+                <line x1={-30} y1={-5} x2={30} y2={-5}
+                  stroke={COL.gnd} strokeWidth={4.5} strokeLinecap="round" />
+                <line x1={-15} y1={11} x2={15} y2={11}
+                  stroke={COL.gnd} strokeWidth={3} strokeLinecap="round" />
+                <text y={40} textAnchor="middle" fontSize={16} fill={COL.gnd} fontWeight={700}
+                  fontFamily="'DM Sans', sans-serif">TIERRA</text>
+                {phase === "touched" && (
+                  <text y={56} textAnchor="middle" fontSize={13} fill={COL.gnd} fontWeight={600}
+                    fontFamily="'DM Sans', sans-serif" opacity={0.65}>
+                    {"\u2190 arrastra aqu\u00ed"}
+                  </text>
+                )}
+              </g>
+
+              {/* Sphere 1 */}
+              <g>
+                <circle cx={S1C.x} cy={S1C.y} r={s1r + 18} fill="url(#rg1)" />
+                <circle cx={S1C.x} cy={S1C.y} r={s1r}
+                  fill={COL.panel} stroke={COL.s1} strokeWidth={3} filter="url(#sh1)" />
+                {q1 > 0 && Array.from({ length: Math.min(50, Math.max(6, Math.round(qi(q1) * 50))) }).map(function(_, i, a) {
+                  var ang = (2 * Math.PI * i) / a.length - Math.PI / 2;
+                  var cr = s1r * 0.96;
+                  return (
+                    <text key={i} x={S1C.x + Math.cos(ang) * cr} y={S1C.y + Math.sin(ang) * cr + 7}
+                      textAnchor="middle" fontSize={26} fontWeight={800}
+                      fill={COL.s1} fillOpacity={0.25 + 0.75 * qi(q1)}>+</text>
+                  );
+                })}
+                <text x={S1C.x} y={S1C.y - s1r - 115} textAnchor="middle"
+                  fontSize={24} fontWeight={800} fill={COL.s1} fontFamily="'DM Sans', sans-serif">
+                  {"Esfera 1"}
+                </text>
+                <text x={S1C.x} y={S1C.y - s1r - 72} textAnchor="middle"
+                  fontSize={32} fontWeight={700} fill={COL.bright} fontFamily="'JetBrains Mono', monospace">
+                  {fmt(q1, "C")}
+                </text>
+                <text x={S1C.x} y={S1C.y - s1r - 32} textAnchor="middle"
+                  fontSize={28} fontWeight={600} fill={COL.bright} fontFamily="'JetBrains Mono', monospace">
+                  {fmtV(v1)}
+                </text>
+              </g>
+
+              {/* Sphere 2 */}
+              <g style={{ cursor: dragging ? "grabbing" : "grab" }}>
+                <circle cx={s2pos.x} cy={s2pos.y} r={s2r + 12} fill="url(#rg2)" />
+                <circle cx={s2pos.x} cy={s2pos.y} r={s2r}
+                  fill={COL.panel} stroke={COL.s2} strokeWidth={2.5} filter="url(#sh2)" />
+                {q2 > 0 && Array.from({ length: Math.min(24, Math.max(3, Math.round(qi(q2) * 24))) }).map(function(_, i, a) {
+                  var ang = (2 * Math.PI * i) / a.length - Math.PI / 2;
+                  var cr = s2r * 0.95;
+                  return (
+                    <text key={i} x={s2pos.x + Math.cos(ang) * cr} y={s2pos.y + Math.sin(ang) * cr + 6}
+                      textAnchor="middle" fontSize={20} fontWeight={800}
+                      fill={COL.s2} fillOpacity={0.25 + 0.75 * qi(q2)}>+</text>
+                  );
+                })}
+                <text x={s2pos.x} y={s2pos.y - s2r - 115} textAnchor="middle"
+                  fontSize={24} fontWeight={800} fill={COL.s2} fontFamily="'DM Sans', sans-serif">
+                  {"Esfera 2"}
+                </text>
+                <text x={s2pos.x} y={s2pos.y - s2r - 72} textAnchor="middle"
+                  fontSize={32} fontWeight={700} fill={COL.bright} fontFamily="'JetBrains Mono', monospace">
+                  {fmt(q2, "C")}
+                </text>
+                <text x={s2pos.x} y={s2pos.y - s2r - 32} textAnchor="middle"
+                  fontSize={28} fontWeight={600} fill={COL.bright} fontFamily="'JetBrains Mono', monospace">
+                  {fmtV(v2)}
+                </text>
+                {!dragging && phase === "idle" && (
+                  <text x={s2pos.x} y={s2pos.y + s2r + 48} textAnchor="middle"
+                    fontSize={12} fill={COL.dim} fontFamily="'DM Sans', sans-serif" fontWeight={600} opacity={0.5}>
+                    {"\u2190 arrastra"}
+                  </text>
+                )}
+              </g>
+
+              {/* Instruction */}
+              <rect x={180} y={468} width={440} height={26} rx={8}
+                fill={COL.accentBg} fillOpacity={0.6} />
+              <text x={400} y={486} textAnchor="middle" fontSize={14} fontWeight={600}
+                fill={COL.accent} fontFamily="'DM Sans', sans-serif">
+                {instText}
+              </text>
+
+            </svg>
+          </div>
+          </div>
+
+          {/* Right half: chart */}
+          <div style={{
+            flex: 1, padding: "12px 16px 12px 4px",
+            borderLeft: "1px solid " + COL.border, background: COL.panel,
+            display: "flex", flexDirection: "column", minWidth: 0,
+          }}>
+            <div style={{ fontSize: 10.5, fontWeight: 800, textTransform: "uppercase", color: COL.dim, letterSpacing: "0.08em", marginBottom: 6 }}>
+              {"Descarga de la esfera 1 \u2014 Q\u2081 vs iteraci\u00f3n"}
+            </div>
+            <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet" style={{ width: "100%", flex: 1, minHeight: 0 }}>
+              <line x1={50} y1={30} x2={50} y2={250} stroke={COL.border} strokeWidth={1} />
+              <line x1={50} y1={250} x2={380} y2={250} stroke={COL.border} strokeWidth={1} />
+              {[0, 0.25, 0.5, 0.75, 1].map(function(f, i) {
+                return (
+                  <g key={i}>
+                    <line x1={50} y1={250 - f * 220} x2={380} y2={250 - f * 220}
+                      stroke={COL.grid} strokeWidth={0.5} strokeDasharray={f > 0 && f < 1 ? "3 3" : "none"} />
+                    <text x={46} y={250 - f * 220 + 4} textAnchor="end" fontSize={10}
+                      fill={COL.dim} fontFamily="'JetBrains Mono', monospace">{(f * 100).toFixed(0)}%</text>
+                  </g>
+                );
+              })}
+              <text x={15} y={140} textAnchor="middle" fontSize={11} fill={COL.dim}
+                fontFamily="'DM Sans', sans-serif" fontWeight={600} transform="rotate(-90, 15, 140)">
+                {"Q\u2081 / Q\u2080"}
+              </text>
+              <text x={215} y={285} textAnchor="middle" fontSize={11} fill={COL.dim}
+                fontFamily="'DM Sans', sans-serif" fontWeight={600}>
+                {"Iteraci\u00f3n n"}
+              </text>
+
+              {chartData && (function() {
+                var points = chartData.points, maxQ = chartData.maxQ, maxN = chartData.maxN;
+                var xS = maxN > 0 ? 320 / maxN : 320;
+                var yS = maxQ > 0 ? 220 / maxQ : 220;
+                var pathD = points.map(function(p, i) {
+                  return (i === 0 ? "M" : "L") + (55 + p.n * xS).toFixed(1) + " " + (250 - p.q1 * yS).toFixed(1);
+                }).join(" ");
+                var lastX = (55 + points[points.length - 1].n * xS).toFixed(1);
+                var areaD = pathD + " L" + lastX + " 250 L55 250 Z";
+                var steps = maxN * 4;
+                var theoD = Array.from({ length: steps + 1 }).map(function(_, i) {
+                  var n = (i / steps) * maxN;
+                  var x = 55 + n * xS;
+                  var y = 250 - q0 * Math.pow(ratio, n) * yS;
+                  return (i === 0 ? "M" : "L") + x.toFixed(1) + " " + y.toFixed(1);
+                }).join(" ");
+
+                return (
+                  <g>
+                    <path d={areaD} fill={COL.accent} fillOpacity={0.06} />
+                    <path d={theoD} fill="none" stroke={COL.dim} strokeWidth={1.5} strokeDasharray="5 4" strokeOpacity={0.7} />
+                    <path d={pathD} fill="none" stroke={COL.accent} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+                    {points.map(function(p, i) {
+                      var x = 55 + p.n * xS, y = 250 - p.q1 * yS;
+                      return (
+                        <g key={i}>
+                          <circle cx={x} cy={y} r={4.5} fill={COL.panel} stroke={COL.accent} strokeWidth={2} />
+                          {(maxN <= 12 || i === 0 || i === points.length - 1) && (
+                            <text x={x} y={268} textAnchor="middle" fontSize={9}
+                              fill={COL.dim} fontFamily="'JetBrains Mono', monospace">{p.n}</text>
+                          )}
+                        </g>
+                      );
+                    })}
+                    <g transform="translate(280, 42)">
+                      <line x1={0} y1={0} x2={20} y2={0} stroke={COL.accent} strokeWidth={2.5} />
+                      <text x={24} y={4} fontSize={10} fill={COL.dim} fontFamily="'DM Sans', sans-serif">{"Simulaci\u00f3n"}</text>
+                      <line x1={0} y1={16} x2={20} y2={16} stroke={COL.dim} strokeWidth={1.5} strokeDasharray="5 4" strokeOpacity={0.7} />
+                      <text x={24} y={20} fontSize={10} fill={COL.dim} fontFamily="'DM Sans', sans-serif">{"Q\u2080\u00b7(R\u2081/(R\u2081+R\u2082))\u207f"}</text>
+                    </g>
+                  </g>
+                );
+              })()}
+
+              {!chartData && (
+                <text x={215} y={145} textAnchor="middle" fontSize={13} fill={COL.dim}
+                  fontFamily="'DM Sans', sans-serif" fontWeight={600} fillOpacity={0.5}>
+                  {"Realiza iteraciones para ver el gr\u00e1fico"}
+                </text>
+              )}
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
