@@ -23,6 +23,8 @@ body{height:100%;margin:0;overflow:hidden;background:var(--paper);color:var(--in
 .app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr);gap:.55rem;padding:.6rem .9rem .7rem}
 header{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:.5rem;border-bottom:1px solid var(--rule);padding-bottom:.5rem}
 .brand{font-size:1.1rem;white-space:nowrap}
+.haspf .brand{display:none}
+.haspf header{grid-template-columns:auto 1fr}
 .tabs{display:flex;border:1px solid var(--ink);border-radius:.45rem;overflow:hidden}
 .tabs button{font-family:var(--sans);font-weight:600;font-size:.92rem;padding:.42rem .85rem;background:transparent;border:0;color:var(--ink);cursor:pointer}
 .tabs button + button{border-left:1px solid var(--ink)}
@@ -100,6 +102,8 @@ input[type=range]::-moz-range-thumb{width:1.4rem;height:1.4rem;border-radius:50%
 @media (min-aspect-ratio:11/10){
   .app{padding:.8rem 1.4rem .9rem;gap:.7rem}
   .brand{font-size:1.35rem}
+  .haspf .brand{display:block}
+  .haspf header{grid-template-columns:1fr auto 1fr}
   .pane{flex-direction:row;gap:1.6rem}
   .tx .ctlcol{flex:0 0 22rem;justify-content:center}
   .rx .sigcol,.rx .circol{display:flex;flex-direction:column;gap:.6rem;min-height:0;min-width:0}
@@ -595,7 +599,7 @@ pfc.addEventListener('click', async () => {
 
 /* ---------- pestañas y arranque ---------- */
 const app = document.querySelector('.app'), tabs = [...document.querySelectorAll('.tabs button')];
-if (KEY) tabs[2].hidden = false;
+if (KEY){ tabs[2].hidden = false; app.classList.add('haspf'); }
 function setTab(t){
   S.tab = t; store.set('tab', t); app.dataset.tab = t;
   tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.t === t)));
