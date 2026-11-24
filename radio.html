@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Radio RLC</title>
+<style>
+/* Paleta y tipos de los apuntes de Vibraciones. Una sola pantalla sin desplazamiento: todo va en rem y el rem
+   sale del tamaño de la ventana (24 x 46 rem en vertical, 54 x 30 rem en horizontal). */
+:root{
+  --paper:#faf8f2; --stage:#fdfcf8; --ink:#22201c; --ink-2:#4d4941; --rule:#d6cfbe; --guide:#cfc8b6;
+  --on:#c25a20; --ok:#12866a; --bad:#b0304a;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --serif:Charter,"Bitstream Charter","Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --num:"LMR","Latin Modern Roman","CMU Serif",Georgia,serif;
+  color-scheme:light;
+}
+@font-face{font-family:"LMR";src:url(data:font/woff;base64,d09GRk9UVE8AACh4AAsAAAAAM+QAAgEGAAAAAAAAAAAAAAAAAAAAAAAAAABDRkYgAAABEAAAH+AAACaPeXt6yUdQT1MAACTAAAABQQAAAgp1X4d6R1NVQgAAJgQAAAJzAAAEWh68J+5PUy8yAAAiNAAAAFEAAABgaEiJW2NtYXAAACQEAAAAqAAAAO5GeOs/aGVhZAAAIPAAAAA2AAAANvDaFZNoaGVhAAAiFAAAACAAAAAkCEUD5WhtdHgAACEoAAAA7AAAAWTLgQ/JbWF4cAAAAQgAAAAGAAAABgBZUABuYW1lAAAiiAAAAXwAAAL2Q0tYJXBvc3QAACSsAAAAEwAAACD/hQAoAABQAABZAAB4nI2ZeVwT1/r/Z0gmk8yhqTLGasaZiUvV1rqgddeKuK+ouCsiQlgkLAJhFQ17yIGwCQIqEEHFEcWNutR9w1bt4tW22lar1dLbaq3etmfi4d7v95Vgb/XX+/v97j+8znnyzBxm5nk+53nehySUHgRJkl6z5yyIiQqK9h4ycIExzGwKinNZB8njCfk9Up7gIfso5IlK3NdTcchT2e6L3+9B5T/HVI9OS14/14PL8+rR6VZnop8HQRJKAhCdCD3RnxhN+BJ+RCARTpiJHMJObCH2EIeI08THxJfE9wQi/ocEpJ7sQw4lJ5GzyCVkKBlDppC5ZAW5xWOtR5pHtodtRuBMc3TEkCG+w/2ijGFBxoiw8IRBsXExsR2jGFNIfEKKydgxSwha84chNCLR6PZzD16xvuwVY47r8HINXrG+5BUdEd1xL/fgFetLXjEvnGJe8ol51SXemGiMdjt1jF61v+wYkdzhFpE86GXbSy4J4XHGjgU7Rq/aX3ZMiulwS4oZ9LLtJZdUY1yHj3sQbwqKD3ePXvn9Jf+hg4YMeXdSTGxKnOu1G4YOGTLsHdff0QbfQYaZQcGRMUnxkRGGoOgQw8xBhjmDDHNjkoKCIyMM/WOiDWuM4UGmUENMqGGhcanBHG+MizeExcWYY+PfGmRYGB4Rb0iKiYs0RMQb4owmY1C8McRgjg4xxhkSwo2GaYv8FxqmxkQnGGZHBBuj442GgQMNhnij0RCekBA7ZvDgBHPYoJi4sMGhMdEJ8YNNHU7xg13XDZzqN3fhwNkzJk2Z6z9lUEJygiE0Js4QYkwIijDFD/pL+P/bMDcmLirIRAS5YnsaYSUN5FjSQcoeizysHvcVbyhSFe8rHio9lf2U65Q2ZYlys/I+NYmaSs2lllArqEDqkCqQJukZ9Dn6Bn2ffkT/ol6rTlVf0qg0r2ne0KRr7JonjDcziolnUplm5ihzkvmC+Yr5lnnI/AgIoAO9wCAwDIwGE8FU4A+WgNUgFiSDdJABbKAYlIMqUAO2g0ZwHJwGn4C7oA38DP7hSXhqPb08dZ69PAd7jvD09ZzrudhzlWeEc7XToJNozFij+GdwZayIn9C419tj31mJmQa0QJA79+bbX6NxT6TGJOqB6Ic/INVWwV4LNx3Soxt0Ezz6TABOI2rTodVGHs/E0/BA/C5eg4PQIDwETUUz0QA0DK0S+lTp8DbMjxw8AOu/Q1VoM+r7yZ37qPdkvEkAT2Z8M7JWwF0kak51yNmL+s/OXr6FxjrwqFUlQk4BzKngKmFxjYgC6K2w1JJts23MFsIXUI1Raw4P5bBi5LCeo8743ooVK/JObfwsdWf27uxdoeq6deVr1+onL5s0MnpC8YnFwvyz1iu2ZnW5LQtauQ0wO0XEK+lUmF1RWlBYUSpAe1HTGSFCuhL2gEOarx4jDxHQzYUVXwr1ksoaPhEaOaMPtIeLpnp6KA+c8SjX9ea0Vip4BLSHiaY99EO7JVScRWMlZjNjZuLl+9ApdBota2r9/Xtv3K9WGMXviVx0tj+H5+IReCgOwkHoXTwMLbjx1Y5Le0Vz5aHgCm4TLKsWkS99sKj4qgCGM3g0rsMz0AdUdjksLNbXNRQdFSTaGuYLQzjc1U6ZttGflFnWbRFRKP6Rwktob6b5OjzIHbwOrc2ilEC/Zy0/KKJFNFqEPqYu779UtIcDzonyUl0yMlPtSJWMzVSDCg2vqm5CA7htO2B+uViXBy0J+vZ6OgKm9xKCTSr74afwGHfsGbQeFqVguhes2ivK9XQtrNpWJBRW7IQ1HBpQvRYPrxJBa/zR1eEpsevWbY1trq0qLykRCgoLCyAsTM/TR2ZPmj1H2LgR5lv12cV5xRV3vkCMAFA76qI7E7V742Zh7Z6QsqAytX/F9MqL+n07Dt9DHsXepkKhILMCQr07DH5xR0FuPty4QbDmZWTmWdW7jGvgeg5rjdP9w7fE7DSLe9btyvlbuho4Y7/TlcCKDRaYmW0TJueEp8Rxy7NO/ZAubvgq5crypoU13R/V37p8S/8TVt3F/QT88SQGOBO6SvSixKIjUSJOQz+g6WhiWdmZU18XdJdo67pIGMuFLYD2CNFEH7KVJGTq0zIysrIFfA2fptD13nx7/UAGTaKRGnmgGbiOKsnctGGjPioEJgkm2r7vM3iAA86BKF1XDks3WGBOhk3AvbMMozHJzcVL97qDZsney4h8MAT3rRVH8c2hS08O4LAfHo6H4dUg7PC5nN3cra3f7BKxWR6mmxo/BvcXsAJtVm2Hmx12obC8EdZyD5EyD78pglcCYhqPShBNb2mBEfvEA2HQNF0/EwYfNgogvRBaq7gt0F4nogz3G87LgxuzhGUTgXwB1eriVFjMSh6I53B4lEruJj+nSitgQal+Sw5MEtoXqiwdcUSV7v4ajeKQt6q9ezumsi3QlqVPLYZ1ghykAl0lekkc3G0TkT99D0qmZmFr+tra+Rww1auGMibwZaElTATOJeiBDi3AHPLGE4R2j0W87KFC45CA+qN5Yr+uWJHsF7ZciE1aML8v11e1Mr+0SZQP0E2FpceFJ6oPPzVPPiW+P2/T8PF68FyxnMfjVeugLSVbxDHtrThKvkA5Mq0wgcPjxzHtVjoWruwjmGiksSPNYqYPPL5TlJsLaJTzTw9qQ3FxZjlXYS+rKBKRzfkaVdB+PZTf/4nrfX4MrftF0I/XSvR0CzwqAnqVBU4XFjJgEE8BXT8e6CoyN1kycrOzc4Rpy6bH+nJT5jScXihuTU6sjuQm81XweOJpMfTqydxm7otTUlGJWGBrX/RPbypzA8yGekt5Znl5YVFFmSDbnTlUyaZCe4keJPH1zgUK59quUjK9JLFYShRxGPob4lGAY8/ePQ9cIYoVVip4BbQHuwPUYU7QZ+TnZ1sErMLjsQ4tovLtuWVF+s2Ore8XuLQk3BcaO7Skhj5Xkx1TI6LZWMKjcC6VlB4V0Jcz0Uhhp/afcysKHVCQunObfpO9qLRCQL1QKBqKs6jCPHueVb/RnLra5g7yG/AAp0UBOgRGP8HEitVp4WECWkKz6rqc2qbsPRx6/bPvK0usxdkiqyGgFeZahcyk5UnTOdaDCA4orVspZtnzINSzB/pnwKw0EZ+gU2BWVWmhvaRI2FKx/+zX3OmGgJQycUtoYcgyfTj0iw8SQuJD1wVwvgvOXEoVWR8fm91uq+CatjbU16c2rE0Pzw4Q2bpuwz99GymR+ulPiBW0cllXiQ41wzNGEbNoGmUrzC2x64uut5aXCR+daimsK1BLtDV6A4zhwuYUFqSLJrrGVm7ZoE9K3+hK+Z5YS8kJNHAuhRK65kAHJS8k3kEXH/k+YY86RTRLd3/051ixWXhU8+mVm/r7g7/BXTsCuoeKTUDdHz74u4g7obu6WctHYoWA30Q2lTuMUScV++WjfSMWi/X4jm7yktF9BNy5I9LRDjSPZpU/twyaLmrl26hCF6d605KOO+PJ3GhVRwq119NzGHmbCkioVbonoZESoEw0QN/okAPTnwxduDxl1WphzaqEIB897vzdW0h5+XDLxe1CJI039A6Yn7qocG+scKSscasUX21Oi8oMmX52zbdIh7SoB4oUB7fpRkW8PUxg37CkBcCPTGLKfnjyhP4sPF63Xzi580DlPu5YU8SqrSKrJjZHFs0O0GsnTB6JNfi1v435/MaFB0gJJjLzo4f799f3fDr9V0T9eOd3YTJ6qlsQssIvXMCdvqICduft3aq/fLXl+o0rSyYJde063USfJaOHT/rwzsU9V749LqDXx1O7ko9HzdVr0WodYof+hBXTQpeuSBLqaVSCOjWfqm/JiXAI64PhKlP9eseW3ZsOtgZ+MAp3wRzW4XW4Fqkn/yCy50YzUjz93lIGODPNkvyhdFwCyKy7lvHJ6lPC0RC/rfO4eX6pq0LE1Uszps3Qzyif9v5SYdXB1tRL3KXWrUcPiu+fKv/kmn5k1/lWv+hlQnhSuDmYCw537EsSo09aWy/qL9pbG08K+2r3OQ5xh/aZw2vFxmV2v/l6bYds7ab3wqofhSZJBZCvLk6VG5UdmLFenZU9A5o5PF312zMKDUFC69kneqTy/gprMTVx8FD/k9C+dd/mwztSdoRn5UObVbi6/ez+i9z3748ZLbJXxy4bt3COgBfitZTFAvPj9TKtYn21aLRO6ievoGthSVqm1SXuuLU9gjKhmnfpsHzLRCHRtdOfhi1cyxloPZzAT1zK3KcnSzpsVSGrrKG0ElomyQGgq7SKDgu0HxURpith3fqNKek5FiFp5ZK8ZZyJbjkBtx4U8X16dVBOuLBCxVpMNOuDxhRRrEXrrDHvcI4CXaVI2ttasV+UL9L1sDBBmDVnGIzkTHTtJbjjtNheTYdZN3oLkfHMfXiIO3QfWveJWtTjARr94JkEnJlBPNiXKzkO6Jtja6PjI9MDh/wwA5FI+/33TwWtxZcHk5g5DJBkSgLon0E8cJ4NYYyp4v30iRWrON+Vq+fEiL/SAN1DfhfJCrRNgRqRn+4i3jaf1poZuf6Pwg88r7Qlyo+lOKlZAl6oxwPg3GFexQMJpUvymxKIQWYK9J3gN2GtI7lRqnU0AhjJgwt1MGyz6JgC5AqzAyLlIqQ0O+RECeCUxOfrk0iAB6ARQOXNAK+mD9CaDxI+AGKDKpAHz+TAZ0BayQPJSUrAm1cBDOy+PHg4sy2gbWHb0IdI2+b9kO3XB+gkOh/Y992CB7nD37t1eS0NrOHjoJELGeeuUnfQQJ4HG+QuDuAorJF71gBRSqTBqcYTjae4G5eHYUrUmnddR2rUZztifvmwASzgSVCVwZxMOAJPovgjCSfZhQAvlmJ2oZGSvDzJyzVB7zjA5Qwp7wHq/YDt0gkcQteSSJk6pHAagdiAtsWpRoLfyHu/KdBCAL989CWa+usvkhcgiV4exGsE8SZJdCeIfgTRlSB0BNGfJLQE8bYHMZsgBpLEXIIYTBB6ghhCEF4E4U0Q8wlCQxIqgnidIIZ6EAsJohtBvEEQJEEMJ4guBMESxAiKWEEQnQkinyBiCDKPIHYSpJUkthJEIkHauhLPCdJBE8s6YARDeBL9iWAiibAQm4jviGckRXYm+5L9yaFkCBlL5pP1ZAt5jbxJ/kA+9VB4UB4jPaDHNwqD4i3FA8VzJVB2U/ZTjlKOVU5XhimTlBblIyqHyqOKqWqqgZKo09QNVW/VEFWFqlJ1WfW56keVk1bTb9Bv0WPpuXQAbaI30gV0Fb2HPkpfpG/QD+hf1ZS6k5pTv6f+WH1Xo9R00fTVjNLM1NzQfK+RUZN2PEMaGO17fChDnn8mx+5WDOBxMBqBvdFcNPIxEpFa1CIJ+ySiRb+RaIZDgQILdFfiDwf/UYRXV5WUVwiF42LmBq5U5+TYbHnu2nvz7duIFrTOYuiKNhIJ9048QRueKIbx2hEMOZVR9GS0stW8y/l6A9lysu4ksp5UyAFTeGdPKKHjEjqWztx+ENeAejew++Xf5RW6QL79mIlnC2J5dsE7sHKfiGz36J/KI0ds4DPWDhCGoxIV+1bH7uapQm83+GNhi+haYgljT/I6uZ6RF43jZSuUkF6SzUkkOnNdIUfO5gN414OPeKDow2udmVBCH0por0S61OD0A0UfRruMX8K7popejDaY9zqMlLOQ8pd77DLZOI9ZybC9cqbBi2Ei2+f05t07mmNqY0R2sjkiPVBk4UxG66wJ6rj6bV4rN/gxaJ1kavH67drn1w5eY++M59l9vow2hpGHpjOouYG9OoFnh8zk2f7TGPaGD699/pbrcsMuVL0LZXyteJfXOm+uYgIZZPy0Sw/2xFKe/fothj2xgNEm8dGMorf7pRqZlod1D1Gnh+yTM3LAJN6fIdcwip681vX48n7pShKJYm8q5JHz+MmMfCaNl7tL6Q1ev32KttxhOyUyb/+MleODAs1JwjWafYT7LOSvl+YEiu3h8xm2i5mXu4fwP19UoLs4W2eHhalbBdwZeUWi+WigHvkeQL7oddRZqNwMC+360jx7Tob3NMzOE5Zij41YMVI/vgK/dg5TAn699d7Mcq6kyF4qal33RGkXFagF2XW3LOi1hYgS0Ot+w69mcDl5eTlWmF+TIj7ufwEPw0Y9nhCKJ+NO2EvY4G72corySsoffoLYS8Ip5LEZKe7qtc6bEcz5Dy83/KMBjfkQLWhgT59xznBGj+HvtH9jYtrD5f66MYzs195Ph4klk5YkzahEYwTWxweNvVpZd+bUxF6CFklwI39Gt5px1uDFzz5tOOj40CE3Nnidf4LecaAjT9IcrMXijMzQlcMKS6YtK8MmLMoJilrNrYzbeyVeZK8RiDnzLeqCBuj/D36xCg3Aw9BMaV/JpkbhneqqwT9w7HuWpzWo+ymxJ3qqG78R9+w5Xjhvjjw5j1tqWr0mtjK5IF9cVIuVN1CqHlUiw9dtAhtPPEI9huMyEffB13TJEZF5Zm5p1rHqxrqmg2cdQfMrRK0zwbyCCWC6aNmat3g2eiDPnnqH18pnzHMZMpJRyHlorq4Xr41iwnh2VH+evTHYFUK2JAZNblPIKc5uwxjZGs60PEQTH8Y8ZNvlgKk8uqd1hsIghoxjuvTo6wqrRJ5Eg9pgG2zrQssBaMJyZjV/ciVcL0xh/HnZauFP/vr4V/g9+1xeNIufzpPzeYXBlW62ROcIiaxxrlA4o52GGN4UbFvHYZXdlz9tq1uXoM+y5uTnCHhWeyL2lwupnCpYBPWNF2CDm1JMdXUWrN2Xv1oDjVUiWt/+nEouLbZWclsLi6uKRRQvf1u1f2fjJwXdtSt4r23P49mlz3Nc60SZbFFcFP+xrXZtsj7HmuVa5O32NfhdeQNlK8ovKdbvvgh3uBeZ5lpEa/fl2VFreCy2T8TDZUsa8+pPZz4vyg3dLKKV7U4q027PqOSqCksri0Q0Wi5GY9pLXjGyo5C/fJe6sO398oOcdiyfxKO79xRv8tpYhjwvFygG89o4ntwlaxRDGG0qI6+ezjxfj8ocJHyepniehsp0jn+lmWmtbHUb5TzXVyzTOdrzzLTW+ZXZASXTv8uCtTwiHvj/oVl+hl6MHOCWrU4+L3SLsLiES2Q7Ey7xEliDpUO9sle75QulHiKdRmRfxGjdUtGthUQen6E1nylkqatET84uPSWiX2nc36US2UtF7EsPC5g2cZT1g9MCuvOnvT2AXpkJp7p6YcqOqMXM1Ex4XEQMnVO9K/sAd+7Izku7xILhKu0oxlkDD6Ed6XytrjYZpgt4D9qB9qiqamCtay4GM3gHblKlhzFVovyTKpmXTfm/kWh2CoPW2AYxcmvHrnLzj10lfQr/wuZ1M4WX032YFxuPV0sKLwf4MPKRjk3i5npGjhrHy0ewaQlTmFTnsvBy1EhGtv7bcnI9Ly8aychVf24kH15XyAmzebkqlUfnv5x8nU2WE2YzsjWVR8c7ppGzXf+Vkbn5pyynT+LlVmwyMjejeTl9rHsJI9MSzcsBYxm5/791etxNhayYx8v9LQwa+zmbLCvmuhKKQbGuyai5vAxdyerdppBD3ckK8cI/5vIyV/K65+5kds9bw5mb/07m9Km825DAyOkTOhI9gZEDJjByayLv9cvT1La2NhbI6a6MFtiTHUktTmHYc/683LqOuYmUI56OejYaKae3WZ4NQMq0tgnPWHUfOT3BdUFnYjUvsl2mu6XghHStspljDZMPnzN7b8yfvy5QjFoRYY2zqW1Z8fnZXJYt25ahZ+tKLaVwq3BE9c3+aW/hHlOjA1f7bL0ULrI+hj9rcoHN9Hi1Lhe1zkxXOjgzXKnwzwx3fqxj/lAlhYUFFjkgwSVMAossf4rTEQt/8w9xiprFy6fgDVkpkfduo/g2hZwwg5GtHZZzHZZFMxj5mtnh7OYgb95BZXcUctZ0JpWR15p1/o83baP2fFp867b+q9yvwm8KPwWM3hLErVq8fuUaMexDKkB1oX9ejjXbmt09cmru+LF6nyLvwxOEMe/fSDrBtZzdfPJ9sXkOtRL9rpsF/bL9BZwm96Xu7Lxc6uCarqX0rxHL/eGE2fpknK2bmrg8IYQLmdfwU4poaYVtl/Tn4YXik4JW/tjskBc7yJt3UeldhZw9g5etHZaDHZagGbzZIU/aiqIrShwqYcrUi//jqYGeQGI+BY6CQhdNLS0stF/29Gw4bC8pLLHb7cUlRZ6vnWOJNa4iN4zYS3xOTiSNZBS5jjST6WQuuYncQu4m95Et5FOPMR4TPKZ5VHs0ebR6XFOYld2Vs5VBykfKZ8rfle3UdGoL1Ur9RmHVQpVdVa2SaC86joZ0Cf01/S39mH6qVqpHqWeo56hXquPVyWqoLlZXqiX1QfUZ9WX1VfUN9Rfqu+rv1P9yl7I9NL01gzTjND6a6ZoFmqWaQE2YJkaTqYGaYk2dpkHTpDmsOaY5rflY85WmTfNI86vGySgZjTOoq5RC+6WXNllEbHJSVGVufmkal2bNSc8VcXD7jylLg9cvsnU30U/tiF7MLItr2GEvKC8oFI+hNygEVWfwQKogrzAnTx/lD2NdSKrZxV1xF7RJh80qpES3KOA0uOEJHhSX4It9ONz9BWCpfUg/qogc0dHPDLeY3ha8UfYLLqNToYE7F2JxLdPe6s3LN1UA3esqraPHWZcx9orbwg5JtY6/bd/AWC3jhHXxzG14gDt429W+gj8OWzRWrLH7dpy3tE+g8W/yFmpzpq0gmcPvmRpV1bU2W7W43VpgS9a31/xHPLmVLs4tsBXlyO+0P+q2cVOBrZSrgqU1onyC3gmPu05kVnd1UY38imZRru/N4w34NNrwgkxXo9O4uh8DFvKflWUvFwHdnwH0Owxw00sTDXDPNxlcN5IH/7h+/spHFYsWCDh9FgPC8i3vCfHAm9l3Ex7gDnzufqR+zDQejObR4q7DeUfeN2mT9EvDg8ePDLvwbbJQabUVZbw4aOnmPmgpLiioqREKC2Hhthp10JGjtjoO0cc+/psI5DeRn+tLMJmJgVjNYUaFJNmT2lQBC4v0lVkwRcA3VBY8nGpQPS2p2Y88OKRS4T3tr1GZFpifq08vhTUCuqMCcxiVHQzl2+voAQzQ4TwV1uZX1uSJcaq1eA3VoLJv2fRR5WZ1SektWMmhYBVW4qGUN+bWYvFNfQZcdewYPFounKLP2c+VnRWKtlfdO/Ih4tCCbps2w8I6vbYxvj46Oj4+Oro+vrGxvr5RAM7EF2VRLIdpuy9/eEtykiVnQ16OCJzj4UQelP4Vgk7/byEoS9S94KBkp5c5qMDu93SzUPG/YqFnDH9loW4OKrKGFyxUdBWMV+V/ObzOPzvRmNeIljXefMb+7ByNRrio1Lq8hMx4dVquNWs+N1ZVeV764Og19fHrhz+9rUci5pASj8c+uDtWYX7c4anHJwtHZuxZUemvHquaby2rzhWztufuyG1Qx6ma8AiKLUbvqli1ww7rRPb3z0zfJVwREi/G3P5cj95FHp98/9Nvk/AQn9gJ0aOF9UGR3lP1iXa4XUDDVFqk+PHvqJvoXaBbAZelhgl+UQG5CdzsqNbqHDHlOPxqm/7WnicPtxyDcyRhWyhculyv/bN3+LNvAIj7/4JQ9ozPSyyUJSwuHOrCyi4kKrDW7P+ERVlDpw4y2tnwMhlltd3+CkdfkFHXyQcP3mOSgDMTzuHB/4VmCmxPwk00RdZgeRlqimwV8VewKbCXfEYzExn2x/+Wswpsgwu1iv8ZtbIef8DWcbpmy1Fji5Bcl1Y+65D6b/tPnL6mbxt6YUi/MRMHpRSualkpVGzcH9eQqga4z5tM+9a+DCLtyMNKjeCf0VfOUV/2bPFP0Sen5iW7ZI2wU42NtvxGEYxj2utpV85I6MAO9JHkte8ZvGd/hvyfsb87lXKO7nH/7zAv4N9M9aoXkHsggzLReBp5IuLrJ2KfrishJvAwgV2LBbS9Q7AfqNAw2HO5qO0obv6flc1/LmuACzQsb0ADGuwNwBo2BK7hQsa/OAgG6Ibu5ULCz3fdoDXiX0uHs1/U/XhE7Cg8Rm3W+cBpllnCO+sXRK16pUK4Aq+VnRUQqPl8U8MrBYUWCbo0VVLx/DyzaN24AaZxeI0KTfmF+qi59eiXeqTAXRqHTMdE5JDYbesd9dU1tdvTKhOLhIO7jm05zl29Ge7r4zNrcaiIh2IPakPG+tyU3ILcPL2sVJXaS0oLRe3E634Pnt747PMKoaAMFu7Vy/Pow1XwIwH0ZRBlB12lfrLPq9x4rosbY/ULcPwC8nbQY7bxT36M1C8AMtsHWdHPlHYAYwISmiKhCdJlCY3ZBeBiHnRsjDorFTQM2o2iqZl2Lay0I8oVNmgcvYlOK25Z9AWHwD8eI504qit+bcrIicHG2sOxQnodLKjVo3j65R1rJP82QwE/vgF0tDNK941m06CjY2n/ydWdVIvy31XVNbBWBFZKosEu5PF4wB20zIHeuDPlccyuRAdwbaHAvY3SzUD3zexbveuEb3Ze/Oy2/pth5wcAB5TQmY0MeAw3hIvtK+nBy/wXC8AduvAZgMkM8EIenyLjp+BdRivJcxPRYgmcj+AB3oOaVFWwJikJJqcLuAk30e52CTWBIfzIQD+wq7nt7vaPGmAb8m440OAFnKFmyTlQAskwKakGAvMuudf2O98favAC/g6EHdCB7I77Di+wJZwH5698fAXNvgJ0iJ53f/JkXgCyYInnAeqxSx69CzgpKKGkJCAjuFf+lwSwaRcKSUR9diD6l75oXlyDF2huQGUPUFkDMKns+8BD7zb0elvgw4VtMx+yywnQdRoP5G3IpEMsSJTvfbkniQSLeYsDOJCPQwFc9ayr+j7orr4BZbPbSu0d/Tr4OfHBiJ+Rzg2P1/LBD0DHaVUYcKDTEoBS7E7ZQzqS5AVcX0X7v4qU/XgAAQAAAAIBBs/vtG1fDzz1AAMD6AAAAADG82g0AAAAAMbzaDT+Uv7eBYkEZwAAAAMAAgAAAAAAAHicVY+9SgNRFIS/Mzc2SeMPSIoVdtkswXWr2GzsUgmBtAFtU1n6EGkEO32IvIOlT7CVpaXVVhdsLOSeWJhimAMzZ4axMagn1zsTdbR2zlo/lNpRWKTWs/PMIlk4oVVPYStG9kAmcRmGFDom0yNFeKUKC3L3ROowpLXInXaUashsy8a2zMNi35N0fbrW2pP/JH9tK1DHxO/ILOWp52ww4FQ9Y/WMtKG1NzKLTMMXWIRwS+aZDbk6Gu//YK1rlgm+p2SZ4LlHVAlp23+PvVA5Ivf2TeWItAc5f7d6797n1q5dae58oRvn6S8Oz0HleJxjYGRgYEn/d4+BgXXjv6B/f1g7GRgZUEEkAKqcBzF4nGNgZlJlnMDAysDD1MUUwcDA4A2hGeMYNBiZGBgYGFgZ4ICZAQmEeof7MTgwKCgJMav9t2M4wZLOqMTAwMAIkmNcz7SagYFBgYEFAKWrCY0AAAB4nIXRzU4UURAF4K8BjW5cunJx40oSp4c/E5CdBIwKo4FB3Q7Q85MZ6clMj+jL8BQ+gY/lynTZirJxc3Oq6pxTdatwT9+ybOU+2TUNzjzMrhu85EH2rcHLtrPvDV7xOPvR4DuqpUcNvnuTz4R2T2nqq5mRgaFKsmHNmk1P/+AdyQu55LWec2OlK3NjI0nPpYuo1YyjeDvB+MWtOU+ULiVnCkM9E31JGW9X4aNkYa4wM5cMzJQWpuZWw7FraBS1K6WZsdTEM4WJQi/0F+FUT1R7JZWhQvLSqRNdyUHMUv/00Mi5wmUok5aWJEVUx/U+KlPPtbVVFgby6D7Q1m985tom/zjVmd/9Wg681Ql06JU9+zpO7MtVvsQc/fBMMXOlZ2RiLnfoSHKs9Cm2nKxbc6wwsDDRM7Mhjxtt2XXqjQ86dkN5o6tVrVu6/zPeN9cYNbf7u9M7J7cyQ6XKeXA/x6R1Lbdlx250GSuC05fHvs4afW7dlm3PbP4ESMxxm3icbc2xSkIBGIbhx3OOlZkZlpkQdTplGURIW2P3UIu3EEHQ1tTU1m0kuYiDd9LU0E24NAS/eGaf5Vte+JAgxZ5UpdzMDwq5TCLXc+narXtDj548e/FqapZ+Fa0IyqbvysCdh5VNNf5irhTf8RmjGMckZvEeb/8fv0X5vHQod2O1TMORgQN9FzbVnDm1bl9FIlW1ZkPdlm1NO1p2tXV0HcudOF8Ap/onyXicY2BmAIP/TQwaDFgAACdbAa0AeJxljb8uQ2EYh5/3/KGqOao90vgTytCkp1oSi41BhBADJpEg1UFI07QWJnO33oEb+IyupJfwrW7A8kq/ckQs7/I+v+dBgCwNLvH39o/PiZtP3Qfih5vHNjEBgCo+IHj4zU6vQ3zf6rZZ6N09tyi7D+6K428RgSvaeExw6r5CBiFLyCQRwuLYRsgEGabJETFDngJF5igxzwplVqlQJaHGOnUabOGlrk3XKvJGnyEXXPNCmxf6vPImOYYM+ZScLMuenCAUEUIyROSZpUDsKmUqqX+bAw4RIpbw8dUyrZYVtQRU1JDogJoOqKvBI1FDTQ0hopZELTW1rKulrhYfUUOghmU1TKW20rdx5Ku63a9zCtFBSsZqHL2gxi3W1LAxcv5zBa414n6YcS/g7A83bhnX2uYMjx1950g/EHb1/QsOpoJ2AAAAeJyV0z9sW1UUx/HPvXbiP6JFiiLLYqhAsYjVAZmCUJPYzj/HcRzHbuI47tAl/CuVTIqqMNCJiQkxMTEhBiYmpk5MDIiJiYmJiYmJiSXoXRmpalnQk35H75x3z/d3dd4RUHbmiVynOzi1/M4nj2aWZ+eXF6qup2oYDjovu8HVlQKCnLwFi9nb1ZViysWnssXz89mlW+/OHtx3e/bg/rn27OLjD3UeZtr/KNM7l5mePX7v0UP3UgdJF5MuzHtmGubMTPNJC4qWwjcxH9+PP+Vu5vq5L+b1ohB66s7c87YPXLj02Kc+87kvfeVr3/rO9574wY9+9otf/eZ3f/jTX/4OwmJ4ISyFargRauFmaIS3QjPsiNatiVqaoi2bol1ZvmtPdKAnGjgUjQxFYydypibO0umCaM2GqGA9dSqJmtqiklbqWhZt2haVbSVCRbSjI6rYTbSqaM++qKqbyCuinr5oxUFyURMdOhLVDJKjVdHQsWjVKLmri06ciurGoqmGaOKuqGGaPBTSvEvZP6CiIqeqKm9FzYJVdQUNDSVrRsqOTbxi6q5X51Mril6zbF3Lll1dBwZGxqb/mQuWFRKxopo4GaVhTdOmHXt6Dg2dmDxDWFPQVLKpbEfFnqqeFYdqhladqJtoJMK6DS1tW7bt6ujad6Bv4MjIsbHTdItnCc97+D932NC2rWNf35Fjp88RCjaUtJVtq+io2reir+bIqmN1pxrpVOZmXVPLpi07du3p6jlwaGBo5MTYxHS+MUXB0jzmvSF6MW3W9afqb6aZL6cvbovyctmeecnr8q6l545cirdE19KG5lP8t8dimnzQ+AeALHSCAA==) format("woff");font-display:block}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{height:100%;font-size:min(4.1667vw,2.17vh);font-size:min(4.1667vw,2.17dvh)}
+@media (min-aspect-ratio:11/10){html{font-size:min(1.8519vw,3.333vh);font-size:min(1.8519vw,3.333dvh)}}
+body{height:100%;margin:0;overflow:hidden;background:var(--paper);color:var(--ink);font-family:var(--serif);overscroll-behavior:none;-webkit-user-select:none;user-select:none}
+.app{height:100%;display:grid;grid-template-rows:auto minmax(0,1fr);gap:.55rem;padding:.6rem .9rem .7rem}
+header{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:.5rem;border-bottom:1px solid var(--rule);padding-bottom:.5rem}
+.brand{font-size:1.1rem;white-space:nowrap}
+.tabs{display:flex;border:1px solid var(--ink);border-radius:.45rem;overflow:hidden}
+.tabs button{font-family:var(--sans);font-weight:600;font-size:.92rem;padding:.42rem .85rem;background:transparent;border:0;color:var(--ink);cursor:pointer}
+.tabs button + button{border-left:1px solid var(--ink)}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--paper)}
+.net{justify-self:end;font-family:var(--sans);font-size:.74rem;color:var(--ink-2);display:flex;gap:.3rem;align-items:center;white-space:nowrap}
+.net i{width:.55rem;height:.55rem;border-radius:50%;background:#b9b2a0}
+.net.ok i{background:var(--ok)} .net.bad i{background:var(--bad)}
+svg.mth{display:inline-block;overflow:visible;fill:currentColor;vertical-align:baseline}
+svg.mdefs{position:absolute;width:0;height:0;overflow:hidden}
+.num{font-family:var(--num);font-variant-numeric:tabular-nums lining-nums;white-space:nowrap}
+.k{font-family:var(--sans);font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--ink-2);white-space:nowrap}
+.hint{font-family:var(--sans);font-size:.8rem;line-height:1.35;color:var(--ink-2);margin:0}
+.plot{position:relative;min-height:0;min-width:0;overflow:hidden;flex:1 1 0}
+.plot svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.blk{display:flex;flex-direction:column;min-height:0;gap:.15rem}
+.bh{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem}
+.bh .n{font-family:var(--sans);font-size:.8rem;color:var(--ink)}
+
+.pane{display:none;min-height:0;min-width:0}
+.app[data-tab=tx] .pane.tx,.app[data-tab=rx] .pane.rx,.app[data-tab=pf] .pane.pf{display:flex}
+.pane{flex-direction:column;gap:.55rem}
+
+/* mandos */
+.sl{display:grid;grid-template-columns:1.6rem minmax(0,1fr) 1.6rem;align-items:center;column-gap:.3rem}
+.sl .hd{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between}
+.sl .name{font-family:var(--sans);font-size:.9rem;display:flex;align-items:baseline;gap:.35rem;white-space:nowrap}
+.sl .name svg{font-size:1.15rem}
+.sl .val{font-size:1.2rem}
+.pm{font-family:var(--sans);font-size:1.5rem;line-height:1;color:var(--ink);background:none;border:0;padding:.25rem 0;cursor:pointer;text-align:center;touch-action:manipulation}
+button:focus-visible,input:focus-visible{outline:2px solid #2a5db0;outline-offset:2px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:2rem;background:transparent;margin:0;cursor:pointer;touch-action:pan-y}
+input[type=range]::-webkit-slider-runnable-track{height:.125rem;background:var(--ink);border-radius:1px}
+input[type=range]::-moz-range-track{height:.125rem;background:var(--ink);border-radius:1px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:1.5rem;height:1.5rem;margin-top:-.69rem;border-radius:50%;background:var(--stage);border:.09rem solid var(--ink)}
+input[type=range]::-moz-range-thumb{width:1.4rem;height:1.4rem;border-radius:50%;background:var(--stage);border:.09rem solid var(--ink)}
+.btn{font-family:var(--sans);font-size:.9rem;color:var(--ink);background:var(--stage);border:1px solid var(--ink-2);border-radius:.3rem;padding:.4rem .8rem;cursor:pointer;white-space:nowrap}
+
+/* emisor */
+.tx .ctlcol,.tx .prevcol{display:flex;flex-direction:column;gap:.6rem;min-height:0}
+.tx .prevcol{flex:1 1 0}
+.fld{display:flex;flex-direction:column;gap:.25rem}
+.fld .row{display:flex;align-items:baseline;justify-content:space-between}
+#msg{font-family:var(--num);font-size:1.7rem;letter-spacing:.12em;text-transform:uppercase;width:100%;height:3rem;padding:0 .7rem;border:1px solid var(--ink);border-radius:.35rem;background:var(--stage);color:var(--ink);-webkit-user-select:text;user-select:text}
+.dial{height:3.4rem;flex:none}
+.go{font-family:var(--sans);font-weight:600;font-size:1.1rem;height:3.1rem;border-radius:.45rem;border:1px solid var(--ink);background:var(--ink);color:var(--paper);cursor:pointer;touch-action:manipulation}
+.go.on{background:var(--stage);color:var(--ink)}
+.state{font-family:var(--sans);font-size:.92rem;margin:0;min-height:1.3em;display:flex;align-items:center;gap:.4rem}
+.state i{width:.6rem;height:.6rem;border-radius:50%;background:#b9b2a0;flex:none}
+.state.on i{background:var(--on)} .state.err{color:var(--bad)}
+
+/* receptor */
+.rx .sigcol,.rx .circol{display:contents}
+.rx .in{order:1;flex:1 1 0} .rx .crow{order:2} .rx .resp{order:3;flex:1.25 1 0} .rx .sls{order:4} .rx .out{order:5;flex:1.1 1 0} .rx .read{order:6}
+.crow{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);align-items:center;column-gap:.6rem;background:var(--stage);border:1px solid var(--rule);border-radius:.3rem;padding:.2rem .5rem}
+.schem{width:100%;height:6.2rem;display:block;color:var(--ink)}
+.schem text{font-family:var(--sans);font-size:20px;fill:var(--ink)}
+.eq{display:flex;flex-direction:column;align-items:flex-start;gap:.3rem;font-size:1.05rem;white-space:nowrap}
+.eq .res{display:flex;align-items:baseline;gap:.4rem}
+.eq .res .num{font-size:1.3rem}
+.sls{display:flex;flex-direction:column;gap:.1rem}
+.read{display:grid;grid-template-columns:minmax(0,1fr);row-gap:.1rem;border-top:1px solid var(--rule);padding-top:.35rem}
+.read .rv{display:grid;height:2.5rem;align-items:center}
+.read .rv > span{grid-area:1/1;white-space:nowrap}
+.read .m{font-size:1.75rem;letter-spacing:.08em}
+.read .none{font-size:1.1rem;color:var(--ink-2)}
+.read .rs{font-family:var(--sans);font-size:.82rem;color:var(--ink);min-height:1.2em;white-space:nowrap}
+
+/* profesor */
+.pfhead{display:flex;align-items:center;justify-content:space-between;gap:.6rem}
+.pfhead span{font-family:var(--sans);font-size:1rem}
+.pflist{flex:1 1 0;min-height:0;overflow:auto;border:1px solid var(--rule);border-radius:.3rem;background:var(--stage);-webkit-overflow-scrolling:touch}
+.pfrow{display:grid;grid-template-columns:5.2rem minmax(0,1fr) auto;align-items:center;column-gap:.6rem;padding:.35rem .6rem;border-bottom:1px solid var(--rule)}
+.pfrow .f{font-size:1.05rem} .pfrow .m{font-size:1.2rem;letter-spacing:.06em;overflow:hidden;text-overflow:ellipsis}
+
+@media (min-aspect-ratio:11/10){
+  .app{padding:.8rem 1.4rem .9rem;gap:.7rem}
+  .brand{font-size:1.35rem}
+  .pane{flex-direction:row;gap:1.6rem}
+  .tx .ctlcol{flex:0 0 22rem;justify-content:center}
+  .rx .sigcol,.rx .circol{display:flex;flex-direction:column;gap:.6rem;min-height:0;min-width:0}
+  .rx .sigcol{flex:1.2 1 0} .rx .circol{flex:1 1 0}
+  .schem{height:8rem}
+  .pane.pf{flex-direction:column;max-width:40rem;margin:0 auto;width:100%}
+}
+</style>
+</head>
+<body>
+<svg class="mdefs" aria-hidden="true"><defs><path id="k23d02a154a" d="M 3.5625 -3.890625 L 4.40625 -3.890625 C 4.59375 -3.890625 4.6875 -3.890625 4.6875 -4.078125 C 4.6875 -4.1875 4.59375 -4.1875 4.4375 -4.1875 L 3.625 -4.1875 L 3.828125 -5.296875 C 3.875 -5.5 4 -6.1875 4.0625 -6.3125 C 4.15625 -6.484375 4.3125 -6.640625 4.515625 -6.640625 C 4.5625 -6.640625 4.8125 -6.640625 5 -6.46875 C 4.5625 -6.421875 4.46875 -6.078125 4.46875 -5.9375 C 4.46875 -5.71875 4.640625 -5.59375 4.828125 -5.59375 C 5.078125 -5.59375 5.359375 -5.8125 5.359375 -6.1875 C 5.359375 -6.625 4.921875 -6.859375 4.515625 -6.859375 C 4.1875 -6.859375 3.578125 -6.671875 3.28125 -5.71875 C 3.234375 -5.515625 3.203125 -5.40625 2.96875 -4.1875 L 2.296875 -4.1875 C 2.109375 -4.1875 2 -4.1875 2 -4 C 2 -3.890625 2.09375 -3.890625 2.28125 -3.890625 L 2.921875 -3.890625 L 2.1875 -0.046875 C 2.015625 0.890625 1.84375 1.78125 1.34375 1.78125 C 1.296875 1.78125 1.0625 1.78125 0.875 1.609375 C 1.328125 1.578125 1.40625 1.21875 1.40625 1.078125 C 1.40625 0.859375 1.234375 0.734375 1.046875 0.734375 C 0.796875 0.734375 0.515625 0.953125 0.515625 1.328125 C 0.515625 1.765625 0.9375 2 1.34375 2 C 1.875 2 2.265625 1.421875 2.4375 1.046875 C 2.75 0.4375 2.96875 -0.734375 2.984375 -0.8125 Z M 3.5625 -3.890625 "/><path id="k5c223f6ac4" d="M 2.578125 -3.625 L 3.671875 -3.625 C 3.359375 -2.1875 3.265625 -1.765625 3.265625 -1.125 C 3.265625 -0.96875 3.265625 -0.703125 3.34375 -0.375 C 3.4375 0.046875 3.546875 0.109375 3.6875 0.109375 C 3.890625 0.109375 4.09375 -0.0625 4.09375 -0.265625 C 4.09375 -0.328125 4.09375 -0.34375 4.03125 -0.46875 C 3.75 -1.171875 3.75 -1.8125 3.75 -2.078125 C 3.75 -2.59375 3.8125 -3.125 3.921875 -3.625 L 5.03125 -3.625 C 5.15625 -3.625 5.515625 -3.625 5.515625 -3.953125 C 5.515625 -4.1875 5.3125 -4.1875 5.125 -4.1875 L 1.859375 -4.1875 C 1.65625 -4.1875 1.28125 -4.1875 0.859375 -3.734375 C 0.515625 -3.359375 0.265625 -2.90625 0.265625 -2.859375 C 0.265625 -2.84375 0.265625 -2.765625 0.375 -2.765625 C 0.453125 -2.765625 0.46875 -2.796875 0.53125 -2.875 C 1.015625 -3.625 1.578125 -3.625 1.765625 -3.625 L 2.328125 -3.625 C 2.015625 -2.453125 1.484375 -1.265625 1.078125 -0.390625 C 1 -0.25 1 -0.21875 1 -0.15625 C 1 0.03125 1.15625 0.109375 1.28125 0.109375 C 1.578125 0.109375 1.65625 -0.171875 1.765625 -0.53125 C 1.90625 -0.96875 1.90625 -0.984375 2.03125 -1.484375 Z M 2.578125 -3.625 "/><path id="kd39323c0c2" d="M 3.640625 -5.875 C 3.71875 -6.234375 3.75 -6.34375 4.671875 -6.34375 C 4.953125 -6.34375 5.03125 -6.34375 5.03125 -6.515625 C 5.03125 -6.640625 4.921875 -6.640625 4.875 -6.640625 C 4.5625 -6.640625 3.765625 -6.609375 3.4375 -6.609375 C 3.15625 -6.609375 2.4375 -6.640625 2.140625 -6.640625 C 2.078125 -6.640625 1.96875 -6.640625 1.96875 -6.4375 C 1.96875 -6.34375 2.046875 -6.34375 2.234375 -6.34375 C 2.25 -6.34375 2.4375 -6.34375 2.609375 -6.3125 C 2.78125 -6.296875 2.859375 -6.28125 2.859375 -6.15625 C 2.859375 -6.125 2.859375 -6.09375 2.828125 -5.984375 L 1.53125 -0.765625 C 1.421875 -0.375 1.40625 -0.296875 0.640625 -0.296875 C 0.46875 -0.296875 0.375 -0.296875 0.375 -0.109375 C 0.375 0 0.46875 0 0.640625 0 L 5.140625 0 C 5.375 0 5.390625 0 5.4375 -0.171875 L 6.203125 -2.265625 C 6.25 -2.375 6.25 -2.390625 6.25 -2.40625 C 6.25 -2.4375 6.21875 -2.5 6.125 -2.5 C 6.046875 -2.5 6.03125 -2.453125 5.96875 -2.296875 C 5.640625 -1.40625 5.203125 -0.296875 3.53125 -0.296875 L 2.609375 -0.296875 C 2.484375 -0.296875 2.453125 -0.296875 2.40625 -0.3125 C 2.296875 -0.328125 2.28125 -0.328125 2.28125 -0.40625 C 2.28125 -0.4375 2.28125 -0.453125 2.328125 -0.625 Z M 3.640625 -5.875 "/><path id="kb63e2d0a03" d="M 7.390625 -6.75 C 7.390625 -6.78125 7.359375 -6.859375 7.28125 -6.859375 C 7.25 -6.859375 7.234375 -6.84375 7.140625 -6.734375 L 6.453125 -5.984375 C 6.359375 -6.125 5.921875 -6.859375 4.84375 -6.859375 C 2.671875 -6.859375 0.484375 -4.703125 0.484375 -2.453125 C 0.484375 -0.84375 1.625 0.21875 3.125 0.21875 C 3.96875 0.21875 4.703125 -0.171875 5.21875 -0.625 C 6.125 -1.421875 6.28125 -2.296875 6.28125 -2.328125 C 6.28125 -2.421875 6.1875 -2.421875 6.171875 -2.421875 C 6.109375 -2.421875 6.0625 -2.40625 6.046875 -2.328125 C 5.953125 -2.046875 5.734375 -1.359375 5.0625 -0.796875 C 4.390625 -0.25 3.78125 -0.09375 3.28125 -0.09375 C 2.40625 -0.09375 1.375 -0.59375 1.375 -2.109375 C 1.375 -2.65625 1.578125 -4.234375 2.546875 -5.375 C 3.140625 -6.0625 4.046875 -6.546875 4.921875 -6.546875 C 5.90625 -6.546875 6.484375 -5.796875 6.484375 -4.671875 C 6.484375 -4.28125 6.453125 -4.28125 6.453125 -4.171875 C 6.453125 -4.078125 6.5625 -4.078125 6.59375 -4.078125 C 6.71875 -4.078125 6.71875 -4.09375 6.78125 -4.28125 Z M 7.390625 -6.75 "/><path id="ke30b088ec5" d="M 3.5 -2.171875 C 3.5 -2.921875 3.421875 -3.453125 3.109375 -3.921875 C 2.890625 -4.234375 2.46875 -4.515625 1.9375 -4.515625 C 0.359375 -4.515625 0.359375 -2.65625 0.359375 -2.171875 C 0.359375 -1.671875 0.359375 0.140625 1.9375 0.140625 C 3.5 0.140625 3.5 -1.671875 3.5 -2.171875 Z M 1.9375 -0.046875 C 1.625 -0.046875 1.203125 -0.234375 1.0625 -0.796875 C 0.96875 -1.203125 0.96875 -1.75 0.96875 -2.25 C 0.96875 -2.75 0.96875 -3.265625 1.078125 -3.640625 C 1.21875 -4.1875 1.65625 -4.328125 1.9375 -4.328125 C 2.296875 -4.328125 2.65625 -4.09375 2.765625 -3.703125 C 2.875 -3.34375 2.890625 -2.84375 2.890625 -2.25 C 2.890625 -1.75 2.890625 -1.25 2.796875 -0.828125 C 2.671875 -0.203125 2.203125 -0.046875 1.9375 -0.046875 Z M 1.9375 -0.046875 "/><path id="k5801a36803" d="M 6.671875 -3.171875 C 6.828125 -3.171875 7 -3.171875 7 -3.375 C 7 -3.5625 6.828125 -3.5625 6.6875 -3.5625 L 0.859375 -3.5625 C 0.734375 -3.5625 0.546875 -3.5625 0.546875 -3.375 C 0.546875 -3.171875 0.734375 -3.171875 0.875 -3.171875 Z M 6.6875 -1.296875 C 6.828125 -1.296875 7 -1.296875 7 -1.484375 C 7 -1.6875 6.828125 -1.6875 6.671875 -1.6875 L 0.875 -1.6875 C 0.734375 -1.6875 0.546875 -1.6875 0.546875 -1.484375 C 0.546875 -1.296875 0.734375 -1.296875 0.859375 -1.296875 Z M 6.6875 -1.296875 "/><path id="k7bc6f6d540" d="M 2.859375 -6.21875 C 2.859375 -6.453125 2.859375 -6.46875 2.640625 -6.46875 C 2.03125 -5.84375 1.171875 -5.84375 0.859375 -5.84375 L 0.859375 -5.546875 C 1.0625 -5.546875 1.625 -5.546875 2.140625 -5.796875 L 2.140625 -0.765625 C 2.140625 -0.421875 2.109375 -0.296875 1.234375 -0.296875 L 0.921875 -0.296875 L 0.921875 0 C 1.265625 -0.03125 2.109375 -0.03125 2.5 -0.03125 C 2.890625 -0.03125 3.734375 -0.03125 4.078125 0 L 4.078125 -0.296875 L 3.765625 -0.296875 C 2.890625 -0.296875 2.859375 -0.40625 2.859375 -0.765625 Z M 2.859375 -6.21875 "/><path id="k8ed49fe33b" d="M 1.234375 -0.75 L 2.265625 -1.75 C 3.78125 -3.09375 4.359375 -3.609375 4.359375 -4.59375 C 4.359375 -5.6875 3.484375 -6.46875 2.296875 -6.46875 C 1.203125 -6.46875 0.484375 -5.578125 0.484375 -4.71875 C 0.484375 -4.171875 0.96875 -4.171875 1 -4.171875 C 1.171875 -4.171875 1.5 -4.28125 1.5 -4.6875 C 1.5 -4.9375 1.328125 -5.1875 0.984375 -5.1875 C 0.90625 -5.1875 0.890625 -5.1875 0.859375 -5.1875 C 1.09375 -5.8125 1.609375 -6.171875 2.171875 -6.171875 C 3.0625 -6.171875 3.484375 -5.390625 3.484375 -4.59375 C 3.484375 -3.8125 3 -3.046875 2.453125 -2.4375 L 0.59375 -0.359375 C 0.484375 -0.25 0.484375 -0.234375 0.484375 0 L 4.09375 0 L 4.359375 -1.6875 L 4.125 -1.6875 C 4.078125 -1.40625 4 -0.96875 3.90625 -0.828125 C 3.84375 -0.75 3.203125 -0.75 2.984375 -0.75 Z M 1.234375 -0.75 "/><path id="k8f0a98d8ef" d="M 3.78125 8.3125 L 2.0625 4.53125 C 2 4.375 1.953125 4.375 1.921875 4.375 C 1.921875 4.375 1.859375 4.375 1.765625 4.453125 L 0.828125 5.15625 C 0.703125 5.25 0.703125 5.28125 0.703125 5.3125 C 0.703125 5.359375 0.734375 5.40625 0.8125 5.40625 C 0.859375 5.40625 1.03125 5.28125 1.140625 5.203125 C 1.203125 5.15625 1.34375 5.046875 1.453125 4.96875 L 3.359375 9.171875 C 3.4375 9.328125 3.484375 9.328125 3.5625 9.328125 C 3.71875 9.328125 3.734375 9.265625 3.8125 9.140625 L 8.21875 0 C 8.296875 -0.140625 8.296875 -0.171875 8.296875 -0.1875 C 8.296875 -0.296875 8.21875 -0.390625 8.09375 -0.390625 C 8.015625 -0.390625 7.953125 -0.34375 7.875 -0.1875 Z M 3.78125 8.3125 "/><path id="k3c481d78c3" d="M 6.265625 -2.984375 C 6.390625 -2.984375 6.5625 -2.984375 6.5625 -3.15625 C 6.5625 -3.34375 6.390625 -3.34375 6.265625 -3.34375 L 0.8125 -3.34375 C 0.6875 -3.34375 0.515625 -3.34375 0.515625 -3.15625 C 0.515625 -2.984375 0.6875 -2.984375 0.8125 -2.984375 Z M 6.265625 -1.21875 C 6.390625 -1.21875 6.5625 -1.21875 6.5625 -1.390625 C 6.5625 -1.578125 6.390625 -1.578125 6.265625 -1.578125 L 0.8125 -1.578125 C 0.6875 -1.578125 0.515625 -1.578125 0.515625 -1.390625 C 0.515625 -1.21875 0.6875 -1.21875 0.8125 -1.21875 Z M 6.265625 -1.21875 "/><path id="k6624f29d7b" d="M 7.359375 -6.734375 C 7.359375 -6.765625 7.34375 -6.828125 7.25 -6.828125 C 7.234375 -6.828125 7.21875 -6.8125 7.109375 -6.71875 L 6.4375 -5.96875 C 6.34375 -6.109375 5.90625 -6.828125 4.828125 -6.828125 C 2.65625 -6.828125 0.484375 -4.6875 0.484375 -2.4375 C 0.484375 -0.84375 1.625 0.21875 3.109375 0.21875 C 3.953125 0.21875 4.6875 -0.171875 5.203125 -0.625 C 6.109375 -1.421875 6.265625 -2.296875 6.265625 -2.328125 C 6.265625 -2.421875 6.171875 -2.421875 6.15625 -2.421875 C 6.09375 -2.421875 6.046875 -2.40625 6.03125 -2.328125 C 5.9375 -2.046875 5.71875 -1.359375 5.046875 -0.796875 C 4.375 -0.25 3.765625 -0.09375 3.265625 -0.09375 C 2.390625 -0.09375 1.359375 -0.59375 1.359375 -2.109375 C 1.359375 -2.65625 1.5625 -4.21875 2.53125 -5.359375 C 3.125 -6.046875 4.046875 -6.53125 4.90625 -6.53125 C 5.890625 -6.53125 6.46875 -5.78125 6.46875 -4.65625 C 6.46875 -4.265625 6.4375 -4.265625 6.4375 -4.171875 C 6.4375 -4.0625 6.53125 -4.0625 6.578125 -4.0625 C 6.703125 -4.0625 6.703125 -4.09375 6.75 -4.265625 Z M 7.359375 -6.734375 "/><path id="kc577b5c0e8" d="M 3.5625 -5.84375 C 3.625 -6.078125 3.65625 -6.171875 3.828125 -6.1875 C 3.921875 -6.203125 4.21875 -6.203125 4.421875 -6.203125 C 5.09375 -6.203125 6.140625 -6.203125 6.140625 -5.265625 C 6.140625 -4.9375 6 -4.28125 5.625 -3.90625 C 5.375 -3.65625 4.875 -3.359375 4.015625 -3.359375 L 2.953125 -3.359375 Z M 4.9375 -3.234375 C 5.90625 -3.4375 7.03125 -4.109375 7.03125 -5.078125 C 7.03125 -5.890625 6.171875 -6.5 4.921875 -6.5 L 2.21875 -6.5 C 2.03125 -6.5 1.9375 -6.5 1.9375 -6.3125 C 1.9375 -6.203125 2.03125 -6.203125 2.203125 -6.203125 C 2.234375 -6.203125 2.40625 -6.203125 2.5625 -6.1875 C 2.734375 -6.171875 2.828125 -6.15625 2.828125 -6.03125 C 2.828125 -6 2.8125 -5.96875 2.78125 -5.859375 L 1.515625 -0.75 C 1.421875 -0.375 1.40625 -0.296875 0.640625 -0.296875 C 0.46875 -0.296875 0.390625 -0.296875 0.390625 -0.109375 C 0.390625 0 0.5 0 0.515625 0 C 0.796875 0 1.453125 -0.03125 1.71875 -0.03125 C 1.984375 -0.03125 2.671875 0 2.9375 0 C 3 0 3.125 0 3.125 -0.1875 C 3.125 -0.296875 3.03125 -0.296875 2.859375 -0.296875 C 2.5 -0.296875 2.234375 -0.296875 2.234375 -0.46875 C 2.234375 -0.515625 2.25 -0.578125 2.265625 -0.625 L 2.890625 -3.15625 L 4.03125 -3.15625 C 4.890625 -3.15625 5.0625 -2.609375 5.0625 -2.28125 C 5.0625 -2.140625 4.984375 -1.84375 4.921875 -1.625 C 4.859375 -1.359375 4.78125 -1.015625 4.78125 -0.8125 C 4.78125 0.203125 5.921875 0.203125 6.046875 0.203125 C 6.84375 0.203125 7.1875 -0.75 7.1875 -0.890625 C 7.1875 -1 7.078125 -1 7.0625 -1 C 6.984375 -1 6.96875 -0.9375 6.953125 -0.859375 C 6.703125 -0.15625 6.296875 0 6.078125 0 C 5.765625 0 5.703125 -0.203125 5.703125 -0.578125 C 5.703125 -0.875 5.75 -1.359375 5.796875 -1.671875 C 5.8125 -1.796875 5.828125 -1.984375 5.828125 -2.109375 C 5.828125 -2.84375 5.203125 -3.140625 4.9375 -3.234375 Z M 4.9375 -3.234375 "/><path id="kc9eaf31598" d="M 3.609375 -5.84375 C 3.703125 -6.1875 3.734375 -6.296875 4.640625 -6.296875 C 4.921875 -6.296875 5 -6.296875 5 -6.484375 C 5 -6.59375 4.890625 -6.59375 4.84375 -6.59375 C 4.53125 -6.59375 3.734375 -6.5625 3.421875 -6.5625 C 3.125 -6.5625 2.421875 -6.59375 2.140625 -6.59375 C 2.0625 -6.59375 1.953125 -6.59375 1.953125 -6.40625 C 1.953125 -6.296875 2.03125 -6.296875 2.21875 -6.296875 C 2.234375 -6.296875 2.421875 -6.296875 2.59375 -6.28125 C 2.765625 -6.25 2.84375 -6.25 2.84375 -6.125 C 2.84375 -6.078125 2.84375 -6.046875 2.8125 -5.9375 L 1.515625 -0.75 C 1.421875 -0.375 1.40625 -0.296875 0.640625 -0.296875 C 0.46875 -0.296875 0.375 -0.296875 0.375 -0.109375 C 0.375 0 0.46875 0 0.640625 0 L 5.109375 0 C 5.34375 0 5.34375 0 5.40625 -0.171875 L 6.171875 -2.25 C 6.203125 -2.359375 6.203125 -2.375 6.203125 -2.390625 C 6.203125 -2.421875 6.1875 -2.484375 6.09375 -2.484375 C 6 -2.484375 6 -2.4375 5.921875 -2.28125 C 5.59375 -1.40625 5.171875 -0.296875 3.5 -0.296875 L 2.59375 -0.296875 C 2.46875 -0.296875 2.4375 -0.296875 2.390625 -0.3125 C 2.28125 -0.3125 2.265625 -0.328125 2.265625 -0.40625 C 2.265625 -0.4375 2.265625 -0.453125 2.3125 -0.625 Z M 3.609375 -5.84375 "/><path id="ka0a2a1ae80" d="M 3.421875 -3.71875 L 4.21875 -3.71875 C 4.40625 -3.71875 4.5 -3.71875 4.5 -3.90625 C 4.5 -4.015625 4.40625 -4.015625 4.25 -4.015625 L 3.46875 -4.015625 L 3.671875 -5.078125 C 3.703125 -5.265625 3.84375 -5.9375 3.890625 -6.046875 C 3.96875 -6.21875 4.140625 -6.359375 4.328125 -6.359375 C 4.375 -6.359375 4.609375 -6.359375 4.78125 -6.1875 C 4.375 -6.15625 4.28125 -5.828125 4.28125 -5.6875 C 4.28125 -5.46875 4.453125 -5.359375 4.625 -5.359375 C 4.875 -5.359375 5.140625 -5.5625 5.140625 -5.921875 C 5.140625 -6.34375 4.71875 -6.5625 4.328125 -6.5625 C 4.015625 -6.5625 3.421875 -6.390625 3.140625 -5.46875 C 3.09375 -5.28125 3.0625 -5.1875 2.84375 -4.015625 L 2.203125 -4.015625 C 2.015625 -4.015625 1.921875 -4.015625 1.921875 -3.84375 C 1.921875 -3.71875 2 -3.71875 2.171875 -3.71875 L 2.796875 -3.71875 L 2.09375 -0.046875 C 1.921875 0.859375 1.765625 1.703125 1.28125 1.703125 C 1.25 1.703125 1.015625 1.703125 0.84375 1.53125 C 1.265625 1.515625 1.34375 1.171875 1.34375 1.03125 C 1.34375 0.8125 1.1875 0.703125 1 0.703125 C 0.765625 0.703125 0.5 0.90625 0.5 1.265625 C 0.5 1.6875 0.90625 1.90625 1.28125 1.90625 C 1.796875 1.90625 2.171875 1.359375 2.34375 1 C 2.640625 0.421875 2.84375 -0.703125 2.859375 -0.765625 Z M 3.421875 -3.71875 "/><path id="kdaabdc95da" d="M 3.359375 -2.078125 C 3.359375 -2.796875 3.28125 -3.3125 2.984375 -3.765625 C 2.78125 -4.0625 2.375 -4.328125 1.84375 -4.328125 C 0.34375 -4.328125 0.34375 -2.546875 0.34375 -2.078125 C 0.34375 -1.609375 0.34375 0.125 1.84375 0.125 C 3.359375 0.125 3.359375 -1.609375 3.359375 -2.078125 Z M 1.84375 -0.046875 C 1.546875 -0.046875 1.15625 -0.234375 1.015625 -0.765625 C 0.9375 -1.140625 0.9375 -1.6875 0.9375 -2.15625 C 0.9375 -2.640625 0.9375 -3.140625 1.03125 -3.5 C 1.171875 -4 1.578125 -4.140625 1.84375 -4.140625 C 2.203125 -4.140625 2.546875 -3.921875 2.65625 -3.546875 C 2.765625 -3.203125 2.765625 -2.734375 2.765625 -2.15625 C 2.765625 -1.6875 2.765625 -1.203125 2.6875 -0.78125 C 2.546875 -0.203125 2.109375 -0.046875 1.84375 -0.046875 Z M 1.84375 -0.046875 "/><g id="n7d9f6ebe9368"><use href="#k23d02a154a" x="0.715" y="12.831"/><use href="#ke30b088ec5" x="5.47105" y="14.28765"/><use href="#k5801a36803" x="12.52615" y="12.831"/><use href="#k7bc6f6d540" x="38.05945" y="6.2595"/><path fill="none" stroke-width="0.398" stroke-linecap="butt" stroke-linejoin="miter" stroke="currentColor" stroke-opacity="1" stroke-miterlimit="10" d="M -0.0000384615 -0.0000705128 L 33.934256 -0.0000705128 " transform="matrix(0.975, 0, 0, -0.975, 23.94535, 10.402275)"/><use href="#k8ed49fe33b" x="23.94535" y="20.7636"/><use href="#k5c223f6ac4" x="28.801825" y="20.7636"/><use href="#k8f0a98d8ef" x="34.6879" y="12.539475"/><path fill="none" stroke-width="0.398" stroke-linecap="butt" stroke-linejoin="miter" stroke="currentColor" stroke-opacity="1" stroke-miterlimit="10" d="M -0.00112821 0.00174359 L 14.614256 0.00174359 " transform="matrix(0.975, 0, 0, -0.975, 42.78235, 12.34545)"/><use href="#kd39323c0c2" x="42.78235" y="20.7636"/><use href="#kb63e2d0a03" x="49.393382" y="20.7636"/></g><g id="n43ec3e5dee6e"><use href="#k3c481d78c3" x="0.2195" y="3.339756"/></g><g id="n0d61f8370cad"><use href="#k6624f29d7b" x="0.0262143" y="6.621266"/></g><g id="ne1e1d3d40573"><use href="#kc577b5c0e8" x="0" y="6.563553"/></g><g id="nd20caec3b48a"><use href="#kc9eaf31598" x="0" y="6.608034"/></g><g id="n78155d2ec4b0"><use href="#ka0a2a1ae80" x="0" y="6.689039"/><use href="#kdaabdc95da" x="4.559467" y="8.085481"/></g></defs></svg>
+<div class="app" data-tab="rx">
+  <header>
+    <div class="brand">Radio RLC</div>
+    <nav class="tabs" role="tablist">
+      <button type="button" role="tab" data-t="tx" aria-selected="false">Emisor</button>
+      <button type="button" role="tab" data-t="rx" aria-selected="true">Receptor</button>
+      <button type="button" role="tab" data-t="pf" aria-selected="false" hidden>Profesor</button>
+    </nav>
+    <div class="net" id="net"><i></i><span>Conectando</span></div>
+  </header>
+  <main style="min-height:0;display:flex;flex-direction:column">
+
+    <section class="pane tx" aria-label="Emisor" style="flex:1 1 0">
+      <div class="ctlcol">
+        <label class="fld"><span class="row"><span class="k">Tu mensaje</span><span class="hint">Hasta 12 letras, sin tildes</span></span>
+          <input id="msg" type="text" maxlength="12" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="done" placeholder="HOLA"></label>
+        <div class="sl">
+          <div class="hd"><label class="name" for="fs">Tu frecuencia</label><span class="val num" id="fval">900 kHz</span></div>
+          <button class="pm" id="fm" type="button" aria-label="Bajar la frecuencia">−</button>
+          <input type="range" id="fs" min="500" max="1700" step="1" value="900" aria-label="Frecuencia de emisión">
+          <button class="pm" id="fp" type="button" aria-label="Subir la frecuencia">+</button>
+        </div>
+        <div class="blk"><span class="k">Frecuencias ocupadas ahora</span><div class="plot dial" id="dial"></div></div>
+        <button class="go" id="go" type="button">Emitir</button>
+        <p class="state" id="txstate"><i></i><span>No estás emitiendo</span></p>
+      </div>
+      <div class="prevcol">
+        <div class="blk" style="flex:1 1 0"><span class="k">Tu señal</span><div class="plot" id="pTx"></div></div>
+        <p class="hint">Cada letra se envía como una amplitud. La A es la más baja y la Z la más alta, entre las dos líneas de puntos.</p>
+      </div>
+    </section>
+
+    <section class="pane rx" aria-label="Receptor" style="flex:1 1 0">
+      <div class="sigcol">
+        <div class="blk in"><div class="bh"><span class="k">Lo que llega a la antena</span><span class="n" id="nst"></span></div><div class="plot" id="pIn"></div></div>
+        <div class="blk out"><div class="bh"><span class="k">Salida del circuito</span></div><div class="plot" id="pOut"></div></div>
+        <div class="read" aria-live="polite"><span class="k">Mensaje que se lee</span><div class="rv"><span class="m num" id="rm"></span><span class="none" id="rn">Ninguno legible</span></div><span class="rs" id="rs"></span></div>
+      </div>
+      <div class="circol">
+        <div class="crow">
+          <svg class="schem" viewBox="-34 6 372 138" role="img" aria-label="Circuito RLC en serie: generador, bobina, condensador variable y resistencia. La salida se toma en la resistencia.">
+            <g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M70 75V48H95"/>
+              <path d="M95 48a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0a7 7 0 0 1 14 0"/>
+              <line id="wL" x1="151" y1="48" x2="180" y2="48"/>
+              <line id="pL" x1="180" y1="27" x2="180" y2="69" stroke-width="2.4"/>
+              <line id="pR" x1="190" y1="27" x2="190" y2="69" stroke-width="2.4"/>
+              <line id="wR" x1="190" y1="48" x2="230" y2="48"/>
+              <path d="M230 48V70l-6 4 12 8-12 8 12 8-12 8 12 8-6 4V136H70V109"/>
+              <circle cx="70" cy="92" r="17"/>
+              <path d="M60 92c3.2-8 6.8-8 10 0s6.800 8 10 0"/>
+              <path d="M230 59H258M230 127H258"/>
+              <circle cx="262" cy="59" r="3.2"/><circle cx="262" cy="127" r="3.2"/>
+            </g>
+            <circle cx="230" cy="59" r="2.5" fill="currentColor"/><circle cx="230" cy="127" r="2.5" fill="currentColor"/>
+            <text x="45" y="99" text-anchor="end">antena</text>
+            <svg x="114.19" y="11.30" width="17.63" height="17.70" viewBox="0 0 6.780 6.808" overflow="visible" fill="currentColor"><use href="#nd20caec3b48a"/></svg>
+            <svg x="174.82" y="2.30" width="20.37" height="17.70" viewBox="0 0 7.833 6.808" overflow="visible" fill="currentColor"><use href="#n0d61f8370cad"/></svg>
+            <svg x="192.13" y="85.30" width="19.87" height="17.70" viewBox="0 0 7.641 6.808" overflow="visible" fill="currentColor"><use href="#ne1e1d3d40573"/></svg>
+            <text x="272" y="99" text-anchor="start">salida</text>
+          </svg>
+          <div class="eq"><span><svg class="mth" viewBox="0 0 58.955 22.425" width="5.8955em" height="2.2425em" style="vertical-align:-0.9265em" role="math" aria-label="f_0=\dfrac{1}{2\pi\sqrt{LC}}"><use href="#n7d9f6ebe9368"/></svg></span><span class="res"><span><svg class="mth" viewBox="0 0 7.749 3.655" width="0.7749em" height="0.3655em" style="vertical-align:-0.0000em" role="math" aria-label="="><use href="#n43ec3e5dee6e"/></svg></span><span class="num" id="fv">1000 kHz</span></span></div>
+        </div>
+        <div class="blk resp"><div class="bh"><span class="k">Lo que deja pasar el circuito</span><span class="n">kHz</span></div><div class="plot" id="pResp"></div></div>
+        <div class="sls">
+          <div class="sl">
+            <div class="hd"><label class="name" for="cs">Capacidad <svg class="mth" viewBox="0 0 7.833 6.808" width="0.7833em" height="0.6808em" style="vertical-align:-0.0000em" role="math" aria-label="C"><use href="#n0d61f8370cad"/></svg></label><span class="val num" id="cv">101 pF</span></div>
+            <button class="pm" id="cm" type="button" aria-label="Disminuir la capacidad">−</button>
+            <input type="range" id="cs" min="0" max="1" step="any" value="0.5" aria-label="Capacidad del condensador">
+            <button class="pm" id="cp" type="button" aria-label="Aumentar la capacidad">+</button>
+          </div>
+          <div class="sl">
+            <div class="hd"><label class="name" for="rs_">Resistencia <svg class="mth" viewBox="0 0 7.641 6.808" width="0.7641em" height="0.6808em" style="vertical-align:-0.0000em" role="math" aria-label="R"><use href="#ne1e1d3d40573"/></svg></label><span class="val num" id="rv">20 Ω</span></div>
+            <button class="pm" id="rm_" type="button" aria-label="Disminuir la resistencia">−</button>
+            <input type="range" id="rs_" min="0" max="1" step="any" value="0.5" aria-label="Resistencia">
+            <button class="pm" id="rp_" type="button" aria-label="Aumentar la resistencia">+</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="pane pf" aria-label="Profesor" style="flex:1 1 0">
+      <div class="pfhead"><span id="pfn">0 emisoras</span><button class="btn" id="pfclear" type="button">Vaciar sala</button></div>
+      <div class="pflist" id="pflist"></div>
+      <p class="hint">«Retirar» quita una emisora y le impide volver a emitir hasta que se vacíe la sala. «Vaciar sala» las quita todas y levanta los bloqueos.</p>
+    </section>
+  </main>
+</div>
+<script>
+(() => {
+'use strict';
+const M = {"f0": {"id": "n78155d2ec4b0", "w": 9.34693897882939, "h": 8.855671232876714, "dp": 1.9371755915317561}};
+const DB = 'https://radio-rlc-default-rtdb.europe-west1.firebasedatabase.app';                  // base de datos compartida; vacío = modo de demostración sin red
+const NS = 'http://www.w3.org/2000/svg', TAU = 2 * Math.PI;
+const qs = new URLSearchParams(location.search);
+const SALA = ((qs.get('sala') || 'aula').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 16)) || 'aula';
+
+/* ---------- física y codificación ---------- */
+const L = 250e-6, FMIN = 500, FMAX = 1700, FA = 470, FB = 1760;      // kHz; FA a FB es el margen del receptor
+const CMIN = 1 / (L * Math.pow(TAU * FB * 1e3, 2)), CMAX = 1 / (L * Math.pow(TAU * FA * 1e3, 2));
+const RMIN = 2, RMAX = 60;
+const TS = 2.5, NVIS = 13, TW = TS * NVIS;                            // duración de una letra y ventana de tiempo del dibujo
+const ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', A_MIN = 0.22, A_SP = 0.05, MAXLEN = 12;
+const PAL = ['#2a5db0', '#c25a20', '#12866a', '#8a3fa0', '#b0304a', '#6a6f10'];
+const level = ch => { const i = ABC.indexOf(ch); return i < 0 ? A_SP : A_MIN + (1 - A_MIN) * i / (ABC.length - 1); };
+const clean = s => String(s == null ? '' : s).toUpperCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Z ]/g, '').replace(/ {2,}/g, ' ').slice(0, MAXLEN);
+const hash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+const sstep = (a, b, x) => { const u = Math.max(0, Math.min(1, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
+const mod = (a, n) => ((a % n) + n) % n;
+const f0of = C => 1 / (TAU * Math.sqrt(L * C)) / 1e3;                 // kHz
+const Cof = f => 1 / (L * Math.pow(TAU * f * 1e3, 2));
+
+/* ---------- utilidades ---------- */
+const $ = id => document.getElementById(id);
+const el = (n, a, p) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const INK = css('--ink'), INK2 = css('--ink-2'), GUIDE = css('--guide'), PAPER = css('--paper'), STAGE = css('--stage'), NUMF = css('--num');
+const fmt = x => Math.round(x).toLocaleString('es-ES', {useGrouping:false});
+const store = { get(k, d){ try { const v = localStorage.getItem('radio.' + k); return v == null ? d : JSON.parse(v); } catch (e){ return d; } },
+                set(k, v){ try { localStorage.setItem('radio.' + k, JSON.stringify(v)); } catch (e){} } };
+const rid = () => { const a = new Uint8Array(12); crypto.getRandomValues(a); return Array.from(a, x => 'abcdefghijklmnopqrstuvwxyz0123456789'[x % 36]).join(''); };
+let ID = store.get('id', ''); if (!/^[a-z0-9]{12}$/.test(ID)){ ID = rid(); store.set('id', ID); }
+
+/* ---------- estado ---------- */
+const S = { tab: store.get('tab', 'tx'), msg: clean(store.get('msg', '')), f: Math.max(FMIN, Math.min(FMAX, +store.get('f', 0) || (FMIN + 20 + hash(ID) % (FMAX - FMIN - 40)))),
+            on: !!store.get('on', false), start: +store.get('start', 0) || 0,
+            lnC: +store.get('lnC', 0) || Math.log(Cof(1000)), lnR: +store.get('lnR', 0) || Math.log(20) };
+S.lnC = Math.max(Math.log(CMIN), Math.min(Math.log(CMAX), S.lnC)); S.lnR = Math.max(Math.log(RMIN), Math.min(Math.log(RMAX), S.lnR));
+let lnC = S.lnC, lnR = S.lnR;
+let KEY = '';
+{ const m = /^#profe-([A-Za-z0-9]{8,40})$/.exec(location.hash);
+  if (m){ KEY = m[1]; store.set('key', KEY); try { history.replaceState(null, '', location.pathname + location.search); } catch (e){} }
+  else KEY = store.get('key', ''); }
+if (S.tab === 'pf' && !KEY) S.tab = 'tx';
+
+function mkStation(id, m, f, t){
+  const h = hash(id), sym = (m + '   ').split('');
+  return {id, m, f, t, w: TAU * f / 1000, off: (h % 997) / 997 * TS, col: PAL[h % PAL.length], sym, lev: sym.map(level), n: sym.length, g: 0, ph: 0, own: id === ID};
+}
+const DEMO = [['demoa1', 'BUENOS DIAS', 700], ['demob2', 'HOLA MUNDO', 1000], ['democ3', 'RESONANCIA', 1400]];
+let me = mkStation(ID, S.msg || 'HOLA', S.f, 0);
+let remote = [];                       // emisoras que devuelve la sala
+let stations = [];                     // lo que suena en el receptor
+function rebuild(){
+  me = mkStation(ID, S.msg || 'HOLA', S.f, 0);
+  const list = remote.filter(s => s.id !== ID);
+  if (S.on && S.msg.trim()) list.push(mkStation(ID, S.msg, S.f, 0));
+  if (!DB) DEMO.forEach(d => list.push(mkStation(d[0], d[1], d[2], 0)));
+  else if (!list.length) list.push(mkStation('prueba', 'HOLA CLASE', 1000, 0));
+  list.sort((a, b) => a.f - b.f);
+  stations = list;
+  dirty = true;
+}
+
+/* amplitud de una emisora en el instante t: un nivel por letra, con paso suave de una letra a la siguiente */
+function env(s, t){
+  const u = (t - s.off) / TS, n = Math.floor(u), fr = u - n;
+  const a1 = s.lev[mod(n, s.n)];
+  if (fr > 0.16) return a1;
+  const a0 = s.lev[mod(n - 1, s.n)];
+  return a0 + (a1 - a0) * sstep(0, 0.16, fr);
+}
+
+/* ---------- dibujo ---------- */
+let U = 16, SW = 1.4, t0 = 0, dirty = true, divIn = 1;
+let run = true;
+
+function Wave(id, o){
+  const host = $(id), svg = el('svg', {'aria-hidden':'true'}, host);
+  let w = 0, h = 0, y0 = 0, sc = 1, path, pool = [], lay;
+  const node = k => pool[k] || (pool[k] = el('text', {'text-anchor':'middle', 'font-family':NUMF, 'font-size':1.0 * U, stroke:PAPER, 'stroke-width':(o.spread ? 0.14 : 0.24) * U, 'paint-order':'stroke', 'stroke-linejoin':'round'}, lay));
+  this.build = () => {
+    w = host.clientWidth; h = host.clientHeight; if (!w || !h){ w = 0; return; }
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    while (svg.firstChild) svg.removeChild(svg.firstChild); pool = [];
+    y0 = o.guides ? h / 2 + 0.45 * U : h / 2; sc = o.guides ? h / 2 - 0.75 * U : h / 2 - 0.2 * U;
+    if (o.guides) for (const a of [1, A_MIN]) el('line', {x1:1.1 * U, x2:w, y1:y0 - a * sc, y2:y0 - a * sc, stroke:GUIDE, 'stroke-width':SW * 0.8, 'stroke-dasharray':`${SW} ${SW * 3.4}`, 'stroke-linecap':'round'}, svg);
+    el('line', {x1:0, x2:w, y1:y0, y2:y0, stroke:GUIDE, 'stroke-width':1}, svg);
+    path = el('path', {fill:'none', 'stroke-width':SW * 0.8, 'stroke-linejoin':'round'}, svg);
+    if (o.guides) for (const [a, lab] of [[1, 'Z'], [A_MIN, 'A']])
+      el('text', {x:0.1 * U, y:y0 - a * sc + 0.3 * U, 'font-family':NUMF, 'font-size':0.85 * U, fill:INK2, stroke:PAPER, 'stroke-width':0.25 * U, 'paint-order':'stroke'}, svg).textContent = lab;
+    lay = el('g', {}, svg);
+  };
+  this.draw = () => {
+    if (!w) return;
+    const act = [];
+    for (const s of o.list()){ const g = o.gain(s); if (g > 0.004) act.push([s, g, o.phase ? s.ph : 0]); }
+    const n = Math.ceil(w / 1.1), k = sc / (o.div ? o.div() : 1);
+    let d = '';
+    for (let i = 0; i <= n; i++){
+      const t = t0 + i / n * TW; let v = 0;
+      for (let j = 0; j < act.length; j++){ const a = act[j], s = a[0]; v += a[1] * env(s, t) * Math.cos(s.w * t - a[2]); }
+      d += (i ? 'L' : 'M') + (i * w / n).toFixed(1) + ' ' + (y0 - k * v).toFixed(1);
+    }
+    path.setAttribute('d', d); path.setAttribute('stroke', o.color());
+    let q = 0;
+    for (const s of o.letters()){
+      const g = o.gain(s), op = o.fade ? sstep(0.10, 0.65, g) : 1;
+      if (op < 0.02) continue;
+      const n0 = Math.floor((t0 - s.off) / TS);
+      for (let i = 0; i < NVIS + 2; i++){
+        const m = n0 + i, idx = mod(m, s.n), ch = s.sym[idx];
+        if (ch === ' ') continue;
+        const x = ((m + 0.5) * TS + s.off - t0) / TW * w;
+        if (x < -U || x > w + U) continue;
+        const y = o.spread ? h - 0.3 * U - s.lev[idx] * (h - 1.4 * U) : y0 - sc * g * s.lev[idx] - 0.36 * U;
+        const t = node(q++);
+        t.removeAttribute('display'); t.setAttribute('x', x.toFixed(1)); t.setAttribute('y', y.toFixed(1)); t.setAttribute('opacity', op.toFixed(2));
+        if (t._c !== ch){ t.textContent = ch; t._c = ch; }
+        if (t._f !== s.col){ t.setAttribute('fill', s.col); t._f = s.col; }
+      }
+    }
+    for (; q < pool.length; q++) pool[q].setAttribute('display', 'none');
+  };
+}
+const ONE = () => 1;
+const wTx  = new Wave('pTx',  {guides:true, color:() => me.col, list:() => [me], gain:ONE, letters:() => [me]});
+const wIn  = new Wave('pIn',  {guides:false, spread:true, color:() => INK, list:() => stations, gain:ONE, letters:() => stations.length > 10 ? stations.filter((s, i) => i % Math.ceil(stations.length / 10) === 0) : stations, div:() => divIn});
+const wOut = new Wave('pOut', {guides:true, fade:true, phase:true, color:() => INK, list:() => stations, gain:s => s.g, letters:() => loud});
+let loud = [];
+
+/* eje de frecuencias compartido por la respuesta del circuito y por el dial del emisor */
+function axis(svg, X, y, w, a, b){
+  el('line', {x1:X(a), x2:X(b), y1:y, y2:y, stroke:INK, 'stroke-width':SW * 0.75}, svg);
+  for (const f of [500, 800, 1100, 1400, 1700]){
+    el('line', {x1:X(f), x2:X(f), y1:y, y2:y + 0.25 * U, stroke:INK, 'stroke-width':SW * 0.75}, svg);
+    el('text', {x:X(f), y:y + 1.75 * U, 'text-anchor':'middle', 'font-family':NUMF, 'font-size':0.95 * U, fill:INK}, svg).textContent = f;
+  }
+}
+const Resp = (() => {
+  const host = $('pResp'), svg = el('svg', {'aria-hidden':'true'}, host);
+  let w = 0, h = 0, X, Y, curve, mark, mlab, lay, ticks = [], dots = [];
+  const build = () => {
+    w = host.clientWidth; h = host.clientHeight; if (!w || !h){ w = 0; return; }
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    while (svg.firstChild) svg.removeChild(svg.firstChild); ticks = []; dots = [];
+    const ml = 0.5 * U, mr = 0.5 * U, mt = 1.7 * U, mb = 2.0 * U;
+    X = f => ml + (f - FA) / (FB - FA) * (w - ml - mr); Y = g => h - mb - g * (h - mt - mb);
+    lay = el('g', {}, svg);
+    axis(svg, X, Y(0), w, FA, FB);
+    mark = el('line', {y1:Y(1) - 0.15 * U, y2:Y(1) - 0.5 * U, stroke:INK, 'stroke-width':SW * 0.75}, svg);
+    const k = 0.115 * U, m = M.f0;
+    mlab = el('svg', {width:m.w * k, height:m.h * k, viewBox:`0 0 ${m.w} ${m.h}`, y:Y(1) - 0.65 * U - (m.h - m.dp) * k, overflow:'visible', fill:INK}, svg);
+    el('use', {href:'#' + m.id}, mlab); mlab._w = m.w * k;
+    curve = el('path', {fill:'none', stroke:INK, 'stroke-width':SW, 'stroke-linejoin':'round'}, svg);
+  };
+  const draw = (C, R) => {
+    if (!w) return;
+    const f0 = f0of(C), n = Math.ceil(w), fs = [];
+    for (let i = 0; i <= n; i++) fs.push(FA + (FB - FA) * i / n);
+    fs.push(f0); fs.sort((a, b) => a - b);
+    let d = '';
+    fs.forEach((f, i) => { const wr = TAU * f * 1e3, Xr = wr * L - 1 / (wr * C); d += (i ? 'L' : 'M') + X(f).toFixed(1) + ' ' + Y(R / Math.hypot(R, Xr)).toFixed(1); });
+    curve.setAttribute('d', d);
+    const x = X(f0); mark.setAttribute('x1', x); mark.setAttribute('x2', x);
+    mlab.setAttribute('x', Math.min(w - mlab._w, Math.max(0, x - mlab._w / 2)));
+    let q = 0, p = 0;
+    for (const s of stations){
+      const t = ticks[q] || (ticks[q] = el('line', {'stroke-linecap':'round'}, lay)); q++;
+      t.removeAttribute('display'); t.setAttribute('x1', X(s.f)); t.setAttribute('x2', X(s.f)); t.setAttribute('y1', Y(0)); t.setAttribute('y2', Y(0) - (s.own ? 1.0 : 0.6) * U);
+      t.setAttribute('stroke', s.col); t.setAttribute('stroke-width', SW * (s.own ? 2 : 1.3));
+      if (s.g > 0.12){
+        const c = dots[p] || (dots[p] = el('circle', {stroke:STAGE}, svg)); p++;
+        c.removeAttribute('display'); c.setAttribute('r', 0.28 * U); c.setAttribute('stroke-width', 0.09 * U); c.setAttribute('cx', X(s.f)); c.setAttribute('cy', Y(s.g)); c.setAttribute('fill', s.col);
+      }
+    }
+    for (; q < ticks.length; q++) ticks[q].setAttribute('display', 'none');
+    for (; p < dots.length; p++) dots[p].setAttribute('display', 'none');
+  };
+  return {build, draw};
+})();
+const Dial = (() => {
+  const host = $('dial'), svg = el('svg', {'aria-hidden':'true'}, host);
+  let w = 0, h = 0, X, y, lay, ticks = [], mine;
+  const build = () => {
+    w = host.clientWidth; h = host.clientHeight; if (!w || !h){ w = 0; return; }
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    while (svg.firstChild) svg.removeChild(svg.firstChild); ticks = [];
+    const a = FMIN - 40, b = FMAX + 40;
+    X = f => 0.4 * U + (f - a) / (b - a) * (w - 0.8 * U); y = h - 1.95 * U;
+    lay = el('g', {}, svg);
+    axis(svg, X, y, w, a, b);
+    mine = el('path', {'stroke-width':SW, 'stroke-linejoin':'round'}, svg);
+  };
+  const draw = () => {
+    if (!w) return;
+    let q = 0;
+    for (const s of stations){
+      if (s.own) continue;
+      const t = ticks[q] || (ticks[q] = el('line', {'stroke-linecap':'round'}, lay)); q++;
+      t.removeAttribute('display'); t.setAttribute('x1', X(s.f)); t.setAttribute('x2', X(s.f)); t.setAttribute('y1', y); t.setAttribute('y2', y - 0.8 * U);
+      t.setAttribute('stroke', s.col); t.setAttribute('stroke-width', SW * 1.4);
+    }
+    for (; q < ticks.length; q++) ticks[q].setAttribute('display', 'none');
+    const x = X(S.f), a = 0.42 * U, top = y - 0.95 * U;
+    mine.setAttribute('d', `M${x} ${top}l${-a} ${-1.6 * a}h${2 * a}z`);
+    mine.setAttribute('stroke', me.col); mine.setAttribute('fill', S.on ? me.col : STAGE);
+  };
+  return {build, draw};
+})();
+
+/* ---------- lecturas ---------- */
+let lastRead = '';
+function readouts(C, R){
+  const key = [C.toExponential(4), R.toFixed(2), stations.length, loud.map(s => s.id + s.g.toFixed(2)).join()].join('|');
+  if (key === lastRead && !dirty) return; lastRead = key;
+  $('cv').textContent = fmt(C * 1e12) + ' pF';
+  $('rv').textContent = fmt(R) + ' Ω';
+  $('fv').textContent = fmt(f0of(C)) + ' kHz';
+  $('nst').textContent = stations.length === 1 ? '1 emisora' : stations.length + ' emisoras';
+  const a = loud[0], b = loud[1], rm = $('rm'), rs = $('rs');
+  const ga = a ? a.g : 0;
+  if (a && rm._id !== a.id + a.m){ rm.textContent = a.m; rm.style.color = a.col; rm._id = a.id + a.m; }
+  rm.style.opacity = sstep(0.3, 0.85, ga).toFixed(2);
+  $('rn').style.opacity = (1 - sstep(0.18, 0.3, ga)).toFixed(2);
+  let sub = '';
+  if (ga >= 0.3){
+    if (b && b.g > 0.25 && b.g > 0.45 * ga) sub = 'Se mezcla con otra emisora. Prueba a bajar R.';
+    else sub = 'Emisora de ' + fmt(a.f) + ' kHz' + (a.own ? ', la tuya' : a.id === 'prueba' ? ', de prueba' : '');
+  } else sub = 'Mueve C hasta que el pico caiga sobre una emisora.';
+  if (rs._t !== sub){ rs.textContent = sub; rs._t = sub; }
+  const d = Math.max(3.5, Math.min(24, 3.2 * Cof(FA) / C * 0.32)), xc = 185;    // separación de placas inversamente proporcional a C
+  $('pL').setAttribute('x1', xc - d / 2); $('pL').setAttribute('x2', xc - d / 2); $('wL').setAttribute('x2', xc - d / 2);
+  $('pR').setAttribute('x1', xc + d / 2); $('pR').setAttribute('x2', xc + d / 2); $('wR').setAttribute('x1', xc + d / 2);
+}
+
+/* ---------- bucle ---------- */
+function layout(){
+  U = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16; SW = Math.max(1, U / 11);
+  wTx.build(); wIn.build(); wOut.build(); Resp.build(); Dial.build(); dirty = true;
+}
+let prev = performance.now();
+function frame(now){
+  const dt = Math.min(0.05, (now - prev) / 1000); prev = now;
+  if (run) t0 += 1.3 * TS * dt;
+  lnC += (S.lnC - lnC) * Math.min(1, dt * 14); if (Math.abs(S.lnC - lnC) < 1e-6) lnC = S.lnC;
+  lnR += (S.lnR - lnR) * Math.min(1, dt * 14); if (Math.abs(S.lnR - lnR) < 1e-6) lnR = S.lnR;
+  const C = Math.exp(lnC), R = Math.exp(lnR);
+  for (const s of stations){ const wr = TAU * s.f * 1e3, X = wr * L - 1 / (wr * C); s.g = R / Math.hypot(R, X); s.ph = Math.atan2(X, R); }
+  loud = stations.filter(s => s.g > 0.08).sort((a, b) => b.g - a.g).slice(0, 5);
+  const want = Math.max(1.05, 1.32 * Math.sqrt(stations.length));
+  divIn += (want - divIn) * Math.min(1, dt * 4);
+  if (S.tab === 'tx'){ wTx.draw(); Dial.draw(); }
+  else if (S.tab === 'rx'){ wIn.draw(); wOut.draw(); Resp.draw(C, R); readouts(C, R); }
+  dirty = false;
+  if (!document.hidden) requestAnimationFrame(frame);
+}
+
+/* ---------- red ---------- */
+const net = $('net');
+const setNet = (cls, txt) => { net.className = 'net ' + cls; net.lastElementChild.textContent = txt; };
+async function req(method, path, body){
+  const c = new AbortController(), to = setTimeout(() => c.abort(), 7000);
+  try {
+    const r = await fetch(DB + '/' + path + '.json', {method, body: body === undefined ? undefined : JSON.stringify(body), signal:c.signal, cache:'no-store'});
+    let j = null; try { j = await r.json(); } catch (e){}
+    return {ok:r.ok, status:r.status, j};
+  } catch (e){ return {ok:false, status:0, j:null}; }
+  finally { clearTimeout(to); }
+}
+let skew = -Infinity, fails = 0, pollTimer = 0, beatTimer = 0, sendTimer = 0;
+async function poll(){
+  clearTimeout(pollTimer);
+  if (!DB || document.hidden) return;
+  const r = await req('GET', 'salas/' + SALA);
+  if (r.ok){
+    fails = 0;
+    const data = r.j && typeof r.j === 'object' ? r.j : {}, em = data.emisores && typeof data.emisores === 'object' ? data.emisores : {};
+    let maxT = 0; const list = [];
+    for (const id in em){
+      const e = em[id]; if (!e || typeof e !== 'object' || !/^[a-z0-9]{10,16}$/.test(id)) continue;
+      const m = clean(e.m), f = +e.f, t = +e.t;
+      if (!(f >= FMIN && f <= FMAX) || !(t > 0)) continue;
+      if (t > maxT) maxT = t;
+      if (m.trim()) list.push([id, m, Math.round(f), t]);
+    }
+    skew = Math.max(skew, maxT - Date.now());
+    const nowS = isFinite(skew) ? Date.now() + skew : maxT;
+    const sig = list.filter(x => x[3] > nowS - 75000).sort((a, b) => a[2] - b[2] || (a[0] < b[0] ? -1 : 1)).slice(0, 150);
+    const key = sig.map(x => x[0] + x[1] + x[2]).join('|');
+    if (key !== poll._k){ poll._k = key; remote = sig.map(x => mkStation(x[0], x[1], x[2], x[3])); rebuild(); renderPf(); }
+    if (S.on && +data.reset > 0 && S.start > 0 && +data.reset > S.start) stopTx('El profesor ha vaciado la sala. Puedes volver a emitir.');
+    setNet('ok', 'En línea');
+  } else { fails++; if (fails >= 2) setNet('bad', 'Sin conexión'); }
+  pollTimer = setTimeout(poll, (fails ? 6000 : 3500) + Math.random() * 600);
+}
+async function beat(){
+  clearTimeout(beatTimer);
+  if (!DB || !S.on || document.hidden) return;
+  const r = await req('PUT', 'salas/' + SALA + '/emisores/' + ID, {m:S.msg, f:S.f, t:{'.sv':'timestamp'}});
+  if (r.ok && r.j && +r.j.t > 0){ skew = Math.max(skew, +r.j.t - Date.now()); if (!S.start){ S.start = +r.j.t; store.set('start', S.start); } txState(); }
+  else if (r.status === 401 || r.status === 403){ stopTx('El profesor ha retirado tu emisora.'); return; }
+  beatTimer = setTimeout(beat, 20000 + Math.random() * 3000);
+}
+const sendSoon = () => { clearTimeout(sendTimer); sendTimer = setTimeout(beat, 500); };
+function stopTx(why){
+  const was = S.on; S.on = false; S.start = 0; store.set('on', false); store.set('start', 0);
+  clearTimeout(beatTimer); clearTimeout(sendTimer);
+  if (was && DB && !why) req('PUT', 'salas/' + SALA + '/emisores/' + ID, {m:'', f:S.f, t:{'.sv':'timestamp'}});
+  rebuild(); txState(why);
+}
+
+/* ---------- emisor ---------- */
+const go = $('go'), txs = $('txstate'), msg = $('msg'), fs = $('fs');
+function txState(err){
+  go.textContent = S.on ? 'Dejar de emitir' : 'Emitir'; go.classList.toggle('on', S.on);
+  txs.className = 'state' + (S.on ? ' on' : '') + (err ? ' err' : '');
+  txs.lastElementChild.textContent = err || (S.on ? 'Estás emitiendo en ' + fmt(S.f) + ' kHz' : 'No estás emitiendo');
+  $('fval').textContent = fmt(S.f) + ' kHz';
+}
+msg.value = S.msg;
+msg.addEventListener('input', () => {
+  const v = clean(msg.value); if (v !== msg.value) msg.value = v;
+  S.msg = v; store.set('msg', v); rebuild();
+  if (S.on){ if (v.trim()) sendSoon(); else stopTx('Escribe un mensaje para emitir.'); }
+});
+msg.addEventListener('keydown', e => { if (e.key === 'Enter') msg.blur(); });
+const setF = f => { S.f = Math.max(FMIN, Math.min(FMAX, Math.round(f))); fs.value = S.f; store.set('f', S.f); rebuild(); txState(); if (S.on) sendSoon(); };
+fs.value = S.f;
+fs.addEventListener('input', () => setF(+fs.value));
+go.addEventListener('click', () => {
+  if (S.on){ stopTx(); return; }
+  if (!S.msg.trim()){ txState('Escribe antes un mensaje.'); msg.focus(); return; }
+  S.on = true; S.start = 0; store.set('on', true); store.set('start', 0); rebuild(); txState(); beat();
+});
+
+/* pulsación mantenida en los signos − y + */
+function hold(btn, fn){
+  let t1 = 0, t2 = 0;
+  const stop = () => { clearTimeout(t1); clearInterval(t2); };
+  btn.addEventListener('pointerdown', e => { e.preventDefault(); stop(); fn(); t1 = setTimeout(() => { t2 = setInterval(fn, 55); }, 380); });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) btn.addEventListener(ev, stop);
+  btn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); fn(); } });
+}
+hold($('fm'), () => setF(S.f - 1)); hold($('fp'), () => setF(S.f + 1));
+
+/* ---------- receptor ---------- */
+const cs = $('cs'), rsl = $('rs_');
+const LC0 = Math.log(CMIN), LC1 = Math.log(CMAX), LR0 = Math.log(RMIN), LR1 = Math.log(RMAX);
+const setC = v => { S.lnC = Math.max(LC0, Math.min(LC1, v)); cs.value = (S.lnC - LC0) / (LC1 - LC0); store.set('lnC', S.lnC); };
+const setR = v => { S.lnR = Math.max(LR0, Math.min(LR1, v)); rsl.value = (S.lnR - LR0) / (LR1 - LR0); store.set('lnR', S.lnR); };
+setC(S.lnC); setR(S.lnR);
+cs.addEventListener('input', () => { S.lnC = LC0 + (+cs.value) * (LC1 - LC0); store.set('lnC', S.lnC); });
+rsl.addEventListener('input', () => { S.lnR = LR0 + (+rsl.value) * (LR1 - LR0); store.set('lnR', S.lnR); });
+const stepF0 = d => setC(Math.log(Cof(Math.max(FA, Math.min(FB, Math.round(f0of(Math.exp(S.lnC))) + d)))));
+hold($('cm'), () => stepF0(+1)); hold($('cp'), () => stepF0(-1));       // menos capacidad, más frecuencia
+hold($('rm_'), () => setR(S.lnR - 0.04)); hold($('rp_'), () => setR(S.lnR + 0.04));
+
+/* ---------- profesor ---------- */
+const pfl = $('pflist'), pfc = $('pfclear');
+function renderPf(){
+  if (!KEY) return;
+  $('pfn').textContent = (remote.length === 1 ? '1 emisora' : remote.length + ' emisoras') + ' en la sala «' + SALA + '»';
+  pfl.textContent = '';
+  for (const s of remote){
+    const row = document.createElement('div'); row.className = 'pfrow';
+    const f = document.createElement('span'); f.className = 'f num'; f.textContent = fmt(s.f) + ' kHz';
+    const m = document.createElement('span'); m.className = 'm num'; m.textContent = s.m; m.style.color = s.col;
+    const b = document.createElement('button'); b.className = 'btn'; b.type = 'button'; b.textContent = 'Retirar';
+    b.addEventListener('click', async () => {
+      b.disabled = true; b.textContent = 'Retirando';
+      const r1 = await req('PUT', 'mod/' + KEY + '/' + SALA + '/bloq/' + s.id, true);
+      const r2 = r1.ok ? await req('DELETE', 'salas/' + SALA + '/emisores/' + s.id) : r1;
+      if (r2.ok) poll(); else { b.disabled = false; b.textContent = 'No se pudo'; }
+    });
+    row.append(f, m, b); pfl.appendChild(row);
+  }
+}
+let armed = 0;
+pfc.addEventListener('click', async () => {
+  if (Date.now() - armed > 3500){ armed = Date.now(); pfc.textContent = 'Pulsa otra vez para vaciar'; setTimeout(() => { if (Date.now() - armed >= 3400) pfc.textContent = 'Vaciar sala'; }, 3500); return; }
+  armed = 0; pfc.disabled = true; pfc.textContent = 'Vaciando';
+  const r1 = await req('PUT', 'mod/' + KEY + '/' + SALA + '/reset', {'.sv':'timestamp'});
+  let ok = r1.ok && +r1.j > 0;
+  if (ok){
+    await req('PUT', 'salas/' + SALA + '/reset', +r1.j);
+    await req('DELETE', 'mod/' + KEY + '/' + SALA + '/bloq');
+    ok = (await req('DELETE', 'salas/' + SALA + '/emisores')).ok;
+  }
+  pfc.disabled = false; pfc.textContent = ok ? 'Vaciar sala' : 'No se pudo vaciar'; poll();
+});
+
+/* ---------- pestañas y arranque ---------- */
+const app = document.querySelector('.app'), tabs = [...document.querySelectorAll('.tabs button')];
+if (KEY) tabs[2].hidden = false;
+function setTab(t){
+  S.tab = t; store.set('tab', t); app.dataset.tab = t;
+  tabs.forEach(b => b.setAttribute('aria-selected', String(b.dataset.t === t)));
+  layout(); if (t === 'pf') renderPf();
+}
+tabs.forEach(b => b.addEventListener('click', () => setTab(b.dataset.t)));
+new ResizeObserver(layout).observe(app);
+document.addEventListener('visibilitychange', () => { if (!document.hidden){ prev = performance.now(); requestAnimationFrame(frame); poll(); if (S.on) beat(); } });
+if (matchMedia('(prefers-reduced-motion: reduce)').matches) run = false;
+if (!DB){ setNet('', 'Demostración'); S.start = 0; }
+rebuild(); txState();
+const start = () => { setTab(S.tab); requestAnimationFrame(frame); poll(); if (S.on) beat(); };
+(document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(start, start);
+})();
+
+</script>
+</body>
+</html>
