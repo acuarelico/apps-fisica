@@ -498,7 +498,7 @@ async function poll(){
     const nowS = isFinite(skew) ? Date.now() + skew : maxT;
     const sig = list.filter(x => x[3] > nowS - 75000).sort((a, b) => a[2] - b[2] || (a[0] < b[0] ? -1 : 1)).slice(0, 150);
     const key = sig.map(x => x[0] + x[1] + x[2]).join('|');
-    if (key !== poll._k){ poll._k = key; remote = sig.map(x => mkStation(x[0], x[1], x[2], x[3])); rebuild(); renderPf(); }
+    if (key !== poll._k){ poll._k = key; remote = sig.map(x => mkStation(x[0], x[1], x[2], x[3])); if (!poll._once){ poll._once = true; if (!S.on && !store.get('ftouched', false)){ const f = freeF(); if (f !== S.f) setF(f, true); } } rebuild(); renderPf(); }
     if (S.on && +data.reset > 0 && S.start > 0 && +data.reset > S.start) stopTx('El profesor ha vaciado la sala. Puedes volver a emitir.');
     setNet('ok', 'En línea');
   } else { fails++; if (fails >= 2) setNet('bad', 'Sin conexión'); }
@@ -535,12 +535,26 @@ msg.addEventListener('input', () => {
   if (S.on){ if (v.trim()) sendSoon(); else stopTx('Escribe un mensaje para emitir.'); }
 });
 msg.addEventListener('keydown', e => { if (e.key === 'Enter') msg.blur(); });
-const setF = f => { S.f = Math.max(FMIN, Math.min(FMAX, Math.round(f))); fs.value = S.f; store.set('f', S.f); rebuild(); txState(); if (S.on) sendSoon(); };
+const setF = (f, auto) => { S.f = Math.max(FMIN, Math.min(FMAX, Math.round(f))); fs.value = S.f; store.set('f', S.f); if (!auto) store.set('ftouched', true); rebuild(); txState(); if (S.on) sendSoon(); };
+/* frecuencia libre: si el alumno no ha elegido la suya, se coloca lejos de las emisoras que ya suenan */
+const SEP = 5;                                                         // kHz: separables bajando R, mezcladas con R = 20 Ω
+function freeF(){
+  const occ = remote.filter(s => s.id !== ID).map(s => s.f);
+  const gap = f => occ.reduce((d, o) => Math.min(d, Math.abs(f - o)), Infinity);
+  if (gap(S.f) >= SEP) return S.f;
+  const ok = [], lo = FMIN + 10, hi = FMAX - 10;
+  for (let f = lo; f <= hi; f++) if (gap(f) >= SEP) ok.push(f);
+  if (ok.length) return ok[Math.floor(Math.random() * ok.length)];
+  let best = S.f, bd = -1;                                             // banda llena: el punto más alejado de todos
+  for (let f = lo; f <= hi; f++){ const d = gap(f); if (d > bd){ bd = d; best = f; } }
+  return best;
+}
 fs.value = S.f;
 fs.addEventListener('input', () => setF(+fs.value));
 go.addEventListener('click', () => {
   if (S.on){ stopTx(); return; }
   if (!S.msg.trim()){ txState('Escribe antes un mensaje.'); msg.focus(); return; }
+  if (!store.get('ftouched', false)){ const f = freeF(); if (f !== S.f) setF(f, true); }
   S.on = true; S.start = 0; store.set('on', true); store.set('start', 0); rebuild(); txState(); beat();
 });
 
